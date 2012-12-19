@@ -33,7 +33,7 @@ class SpriteSprite extends ArrayObject implements SpriteHashable{
     parent::offsetSet($index, $spriteImage);
 
     $sorterclass = SpriteConfig::get('sorter');
-    call_user_func($sorterclass.'::sort',$this);
+    call_user_func($sorterclass.'::sort', &$this);
 
     $this->updateMaximums($spriteImage);
     $this->updateRepeatable($spriteImage);

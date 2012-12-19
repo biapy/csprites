@@ -54,11 +54,12 @@ class Sprite{
 
 
   protected static function arToStr($array, $depth = 0){
+    $tab = '';
     if($depth > 0){
       $tab = implode('', array_fill(0, $depth, "\t"));
     }
     
-    $text.="array(\n";
+    $text="array(\n";
     $count=count($array);
     $x =0 ;
     foreach ($array as $key=>$value){

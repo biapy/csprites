@@ -1,7 +1,7 @@
 <html>
 <head>
 <!--[?php echo Sprite::getAllCssInclude(); ?]-->
-<link rel="stylesheet" type="text/css" title="cSprite CSS" media="all" href="/cSprites/examples/advanced/cache/style.css" />
+<link rel="stylesheet" type="text/css" title="cSprite CSS" media="all" href="cache/style.css" />
 
 </head>
 <body>

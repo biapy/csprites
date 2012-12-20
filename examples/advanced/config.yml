@@ -48,7 +48,7 @@ imageProperties:
   pngCompression: 9
 
 # The relative path of the transparent image, this is only used when generating pseudo-img tags
-transparentImagePath: "/cSprites/examples/simple/1_1_trans.gif"
+transparentImagePath: "./1_1_trans.gif"
 
 #cacheTime in Minutes, set to 0 for no cache. During development set to 0
 cacheTime: 20

@@ -39,7 +39,7 @@ class Sprite{
     return ($node = SpriteStyleRegistry::getStyleNode($path))?($node->image_tag($params)):('');
   }
   
-  public static function styleClass($path){
+  public static function styleClass($path, $params = array()){
     return ($node = SpriteStyleRegistry::getStyleNode($path))?($node->renderClass($params)):('');
   }
   public static function getAllCssInclude(){

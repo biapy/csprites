@@ -1,7 +1,8 @@
 	<?php
 
-class SpriteImage implements SpriteIterable, SpriteHashable {
-  
+class SpriteImage implements SpriteIterable, SpriteHashable
+{
+
   protected $imgPath;
   protected $relativePath;
   protected $imgType;
@@ -13,208 +14,279 @@ class SpriteImage implements SpriteIterable, SpriteHashable {
   protected $position;
   protected $margin;
   protected $params;
-  
-  public function SpriteImage($path, array $params = array()){
-    $this->imgPath = SpriteConfig::get('rootDir').$path;
-    $this->relativePath = $path;
-    
-    if(!($this->fileSize = filesize($this->imgPath))){
+
+  protected $hash;
+
+  public function __construct($path, array $params = array())
+  {
+    $this->hash = null;
+
+    $this->imgPath = $path;
+    $this->relativePath = self::relativePath(SpriteConfig::get('rootDir'), $path);;
+
+    if(!($this->fileSize = filesize($this->imgPath)))
+    {
       SpriteConfig::debug("file existence problem");
       throw new SpriteException($this->imgPath.' : File does not exist or is size 0');
     }
 
-    if(!($this->sizeArray = getimagesize($this->imgPath, $this->imageinfo))){
+    if(!($this->sizeArray = getimagesize($this->imgPath, $this->imageinfo)))
+    {
       SpriteConfig::debug($this->imgPath."image size read problem");
       throw new SpriteException($this->imgPath.' : Image size could not be read');
     }
-    SpriteConfig::debug('bits: '.$this->sizeArray['bits'].' channels:'.@$this->sizeArray['channels'].' mime:'.$this->sizeArray['mime']);
-    
+
+    if(isset($this->sizeArray['bits']) && isset($this->sizeArray['mime']))
+    {
+      SpriteConfig::debug('bits: '.$this->sizeArray['bits'].' channels:'.@$this->sizeArray['channels'].' mime:'.$this->sizeArray['mime']);
+    }
+
+    else
+    {
+      SpriteConfig::debug('bits: unknown channels:'.@$this->sizeArray['channels'].' mime: unknown');
+    }
+
     $this->processType();
-    if(!$this->sizeArray){
+    if(!$this->sizeArray)
+    {
       SpriteConfig::debug('Image size misread');
       throw new SpriteException($this->imgPath.' : Image size could not be read');
     }
+
     $this->setMargins($params);
     $this->params = $params;
   }
-  
-  public function getPath(){
+
+  public static function relativePath($from_path, $to_path, $path_separator = DIRECTORY_SEPARATOR)
+  {
+    $exploded_from = explode($path_separator, rtrim($from_path, $path_separator));
+    $exploded_to = explode($path_separator, rtrim($to_path, $path_separator));
+    while(count($exploded_from) && count($exploded_to) && ($exploded_from[0] == $exploded_to[0]))
+    {
+      array_shift($exploded_from);
+      array_shift($exploded_to);
+    }
+    return str_pad("", count($exploded_from) * 3, '..'.$path_separator).implode($path_separator, $exploded_to);
+  }
+
+  public function getPath()
+  {
     return $this->imgPath;
-  }  
-  
-  public function getRelativePath(){
+  }
+
+  public function getRelativePath()
+  {
     return $this->relativePath;
   }
-  
-  public function getType(){
+
+  public function getType()
+  {
     return $this->imgType;
   }
-  
-  public function getWidth(){
+
+  public function getWidth()
+  {
     return $this->sizeArray[0] + $this->margin->left + $this->margin->right;
   }
-  
-  public function getOriginalWidth(){
+
+  public function getOriginalWidth()
+  {
     return $this->sizeArray[0];
   }
-  
-  public function getHeight(){
+
+  public function getHeight()
+  {
     return $this->sizeArray[1] + $this->margin->top + $this->margin->bottom;
   }
-  
-  public function getOriginalHeight(){
+
+  public function getOriginalHeight()
+  {
     return $this->sizeArray[1];
   }
-  
-  public function getExtension(){
+
+  public function getExtension()
+  {
     return $this->imgExtension;
   }
-  
-  public function getArea(){
+
+  public function getArea()
+  {
     return ($this->sizeArray[0] + $this->margin->left + $this->margin->right) * ($this->sizeArray[1] + $this->margin->top + $this->margin->bottom);
   }
-  
-  public function getOriginalArea(){
+
+  public function getOriginalArea()
+  {
     return $this->getWidth() * $this->getHeight();
   }
-  
-  public function getSizeArray(){
+
+  public function getSizeArray()
+  {
     return $this->sizeArray;
   }
-  
-  public function getFileSize(){
+
+  public function getFileSize()
+  {
     return $this->fileSize;
   }
-  
-  public function getImageInfo(){
+
+  public function getImageInfo()
+  {
     return $this->imageInfo;
   }
-  
-  public function getColorDepth(){
+
+  public function getColorDepth()
+  {
     return $this->sizeArray['bits'];
   }
-  
-  public function getMimeType(){
+
+  public function getMimeType()
+  {
     return $this->sizeArray['mime'];
   }
-  
-  public function getPosition(){
+
+  public function getPosition()
+  {
     return $this->position;
   }
-  
-  public function getMargin(){
+
+  public function getMargin()
+  {
     return $this->margin;
   }
-  
-  public function getParams(){
+
+  public function getParams()
+  {
     return $this->params;
   }
-  
-  public function setPosition(SpriteRectangle $rect){
+
+  public function setPosition(SpriteRectangle $rect)
+  {
     $this->position = $rect;
   }
-  
-  public function isTall(){
+
+  public function isTall()
+  {
     return ($this->getHeight() > $this->getWidth());
   }
-  
-  public function isWide(){
+
+  public function isWide()
+  {
     return ($this->getWidth() > $this->getHeight());
   }
-  
-  public function isSquare(){
+
+  public function isSquare()
+  {
     return ($this->getWidth() == $this->getHeight());
   }
-  
-  public function getLongestDimension(){
+
+  public function getLongestDimension()
+  {
     return ($this->isTall())?($this->getHeight()):($this->getWidth());
   }
-  
-  public function getKey(){
+
+  public function getKey()
+  {
     return $this->getRelativePath();
   }
-  
-  public function __toString(){
+
+  public function __toString()
+  {
     $output = ''."\n";
     $output .= '<li>Path :'.$this->getPath().'</li>'."\n";
     $output .= '<li>Type :'.$this->getType().'</li>'."\n";
     $output .= '<li>Extension :'.$this->getExtension().'</li>'."\n";
-    $output .= '<li>FileSize :'.$this->getFileSize().'</li>'."\n";            
+    $output .= '<li>FileSize :'.$this->getFileSize().'</li>'."\n";
     $output .= '<li>Dimension :'.$this->getWidth().'x'.$this->getHeight().'</li>'."\n";
     $output .= ''."\n";
     return $output;
   }
-  
+
   public function getHash(){
-    return md5($this->getRelativePath());
+    if(!$this->hash)
+    {
+      $this->hash = md5($this->getRelativePath());
+    }
+
+    return $this->hash;
   }
-  
-  public function getCssClass(){
+
+  public function getCssClass()
+  {
     return 'sprite'.$this->getHash();
   }
-  
-  public function updateAlignment(array $spriteParams = array()){
-    if(isset($spriteParams['longestWidth']) && isset($spriteParams['longestHeight'])){
-      if(isset($this->params['sprite-align'])){
-      switch($this->params['sprite-align']){
-        case 'left':{
-          $rightMargin = $spriteParams['longestWidth'] - ($this->margin->left + $this->sizeArray[0]);
-          $this->margin = new SpriteRectangle($this->margin->left, $this->margin->top, $rightMargin, $this->margin->bottom);
-          $this->position = new SpriteRectangle(0,0, $spriteParams['longestWidth'], $this->position->bottom);
-          break;
-        }
-        case 'right':{
-          $leftMargin = $spriteParams['longestWidth'] - ($this->margin->right + $this->sizeArray[0]);
-          $this->margin = new SpriteRectangle($leftMargin, $this->margin->top, $this->margin->right, $this->margin->bottom);
-          $this->position = new SpriteRectangle(0,0, $spriteParams['longestWidth'], $this->position->bottom);
-          break;
-        }
-        case 'top':{
-          $bottomMargin = $spriteParams['longestHeight'] - ($this->margin->top + $this->sizeArray[1]);
-          $this->margin = new SpriteRectangle($this->margin->left, $this->margin->top, $this->margin->right, $bottomMargin);
-          $this->position = new SpriteRectangle(0,0, $this->position->right, $spriteParams['longestHeight']);
-          break;
-        }
-        case 'bottom':{
-          $topMargin = $spriteParams['longestHeight'] - ($this->margin->bottom + $this->sizeArray[1]);
-          $this->margin = new SpriteRectangle($this->margin->left, $topMargin, $this->margin->right, $this->margin->bottom);
-          $this->position = new SpriteRectangle(0,0, $this->position->right, $spriteParams['longestHeight']);
-          break;        
-        }
-      }//end switch
+
+  public function updateAlignment(array $spriteParams = array())
+  {
+    if(isset($spriteParams['longestWidth']) && isset($spriteParams['longestHeight']))
+    {
+      if(isset($this->params['sprite-align']))
+      {
+        switch($this->params['sprite-align'])
+        {
+          case 'left':
+            $rightMargin = $spriteParams['longestWidth'] - ($this->margin->left + $this->sizeArray[0]);
+            $this->margin = new SpriteRectangle($this->margin->left, $this->margin->top, $rightMargin, $this->margin->bottom);
+            $this->position = new SpriteRectangle(0,0, $spriteParams['longestWidth'], $this->position->bottom);
+            break;
+
+          case 'right':
+            $leftMargin = $spriteParams['longestWidth'] - ($this->margin->right + $this->sizeArray[0]);
+            $this->margin = new SpriteRectangle($leftMargin, $this->margin->top, $this->margin->right, $this->margin->bottom);
+            $this->position = new SpriteRectangle(0,0, $spriteParams['longestWidth'], $this->position->bottom);
+            break;
+
+          case 'top':
+            $bottomMargin = $spriteParams['longestHeight'] - ($this->margin->top + $this->sizeArray[1]);
+            $this->margin = new SpriteRectangle($this->margin->left, $this->margin->top, $this->margin->right, $bottomMargin);
+            $this->position = new SpriteRectangle(0,0, $this->position->right, $spriteParams['longestHeight']);
+            break;
+
+          case 'bottom':
+            $topMargin = $spriteParams['longestHeight'] - ($this->margin->bottom + $this->sizeArray[1]);
+            $this->margin = new SpriteRectangle($this->margin->left, $topMargin, $this->margin->right, $this->margin->bottom);
+            $this->position = new SpriteRectangle(0,0, $this->position->right, $spriteParams['longestHeight']);
+            break;
+        }//end switch
       }
     }
   }
-  
-  protected function processType(){
+
+  protected function processType()
+  {
     $this->imgExtension = strtolower(pathinfo($this->getPath(), PATHINFO_EXTENSION));
-    
-    if($this->getExtension() == 'png'){
+
+    if($this->getExtension() == 'png')
+    {
       //$this->imgType = $this->getExtension().'-'.$this->getColorDepth();
       $this->imgType = $this->getExtension();      
     }
-    else{
+    else
+    {
       $this->imgType = $this->getExtension();
     }
-    if(!in_array(strtolower($this->getExtension()), SpriteConfig::get('acceptedTypes'))){
+    if(!in_array(strtolower($this->getExtension()), SpriteConfig::get('acceptedTypes')))
+    {
       SpriteConfig::debug('Extension Type Mismatch: '.$this->getExtension());
       throw new SpriteException($this->getExtension().' : is not an acceptable image type.');
     }
   }
-  protected function setMargins(array $params = array()){
+
+  protected function setMargins(array $params = array())
+  {
     //First Handle Margins
-    if(isset($params['sprite-margin'])){
-      if(is_array($params['sprite-margin'])){
+    if(isset($params['sprite-margin']))
+    {
+      if(is_array($params['sprite-margin']))
+      {
         $this->margin = new SpriteRectangle($params['sprite-margin'][3], $params['sprite-margin'][0], $params['sprite-margin'][1], $params['sprite-margin'][2]);
         $this->position = new SpriteRectangle(0, 0, $this->sizeArray[0] + $this->margin->left + $this->margin->right, $this->sizeArray[1] + $this->margin->top + $this->margin->bottom);
       }
     }
-    else{
+    else
+    {
         $this->margin = new SpriteRectangle(0,0,0,0);
         $this->position = new SpriteRectangle(0, 0, $this->sizeArray[0], $this->sizeArray[1]);
     }
-    
   }
 }
 
-?>

@@ -27,8 +27,8 @@ class SpriteCache{
   public static function updateCache(){
     $cacheTime = SpriteConfig::get('cacheTime') * 60;
     
-    $tmplFiles  = SpriteImageRegistry::buildFileList(SpriteConfig::get('relTmplOutputDirectory'));
-    $imageFiles = SpriteImageRegistry::buildFileList(SpriteConfig::get('relImageOutputDirectory'));
+    $tmplFiles  = SpriteImageRegistry::buildFileList(SpriteConfig::get('rootDir') . SpriteConfig::get('relTmplOutputDirectory'));
+    $imageFiles = SpriteImageRegistry::buildFileList(SpriteConfig::get('rootDir') . SpriteConfig::get('relImageOutputDirectory'));
     
     $files = array_merge($tmplFiles, $imageFiles);
     foreach($files as $file){

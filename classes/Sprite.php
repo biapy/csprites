@@ -1,84 +1,84 @@
 <?php
 
-class Sprite{
-  public static function process(){
-    SpriteTemplateRegistry::preProcessTemplates();       
-    SpriteImageRegistry::processSprites();
-    SpriteTemplateRegistry::processTemplates();    
-    SpriteStyleRegistry::processCss();
-  }
-  
-  
-  public static function registerTemplate($relTemplatePath, $outputName = null, $outputPath = null){
-    SpriteTemplateRegistry::registerTemplate($relTemplatePath, $outputName, $outputPath);
-  }
-  
-  public static function getStyleNode($path){
-    return SpriteStyleRegistry::getStyleNode($path);
-  }
-  
-  public static function style($path, array $params = array()){
-    return ($node = SpriteStyleRegistry::getStyleNode($path))?($node->renderStyle($params)):('');
-  }
-  
-  public static function ppRegister($path, array $params = array()){
-    SpriteImageRegistry::register($path, $params);
-  }
-  
-  public static function ppStyle($path, array $params = array()){
-    //SpriteImageRegistry::register($path, @$params['name'], @$params['imageType']);
-    SpriteImageRegistry::register($path, $params);
-    return "<?php echo Sprite::style('".$path."',".self::arToStr($params)."); ?>";
-  }
-  
-  public static function styleWithBackground($path, array $params = array()){
-    return ($node = SpriteStyleRegistry::getStyleNode($path))?($node->renderStyleWithBackground($params)):('');
+class Sprite
+{
+  public static function process()
+  {
+  	CSprite::getInstance()->process();
+  } // process()
+
+  /**
+   * déclare un nouveau fichier template.
+   * @param  string $relativeTemplatePath Le chemin relatif vers le modèle.
+   * @param  string $outputName           Le nom du modèle.
+   * @param  string $outputPath           Le chemin de sortie du modèle.
+   * @return Sprite                       Renvoie cet objet.
+   */
+  public static function registerTemplate($relativeTemplatePath, $outputName = null, $outputPath = null)
+  {
+   	CSprite::getInstance()->registerTemplate($relativeTemplatePath, $outputName, $outputPath);
+  } // registerTemplate()
+
+  public static function getStyleNode($path)
+  {
+    return CSprite::getInstance()->getStyleNode($path);
   }
 
-  public static function image_tag($path, $params = array()){
-    return ($node = SpriteStyleRegistry::getStyleNode($path))?($node->image_tag($params)):('');
+  public static function style($path, array $params = array())
+  {
+    return CSprite::getInstance()->style($path, $params);
   }
-  
-  public static function styleClass($path, $params = array()){
-    return ($node = SpriteStyleRegistry::getStyleNode($path))?($node->renderClass($params)):('');
+
+  public static function ppRegister($path, array $params = array())
+  {
+    return CSprite::getInstance()->ppRegister($path, $params);
   }
-  public static function getAllCssInclude(){
-    return SpriteStyleRegistry::getAllCssInclude();
+
+  public static function ppStyle($path, array $params = array())
+  {
+    return CSprite::getInstance()->ppStyle($path, $params);
   }
-  
+
+  public static function styleWithBackground($path, array $params = array())
+  {
+    return CSprite::getInstance()->styleWithBackground($path, $params);
+  }
+
+
+  /**
+   * Generate the image tag for the style node.
+   *
+   * Available parameters are:
+   *  - inline: true to use style attribute instead of class.
+   *  - background: allow to choose a different background-repeat value (default to no-repeat).
+   *  - augmentX: add a offset to background X position.
+   *  - augmentY: add a offset to background Y position.
+   *
+   * The additionnal attributes are defined like this:
+   *   array('class' => 'additionnal-class', 'id' => 'item-id');
+   *
+   * @param  string $path         A relative path to the original image.
+   * @param  array  $params       A array of options.
+   * @param  array  $attributes   A array of HTML attributes to add to the tag.
+   * @return string               A HTML img tag.
+   */
+  public static function image_tag($path, $params = array(), $attributes = array())
+  {
+    return CSprite::getInstance()->image_tag($path, $params, $attributes);
+  }
+
+  public static function styleClass($path, $params = array())
+  {
+    return CSprite::getInstance()->styleClass($path, $params);
+  }
+
+  public static function getAllCssInclude()
+  {
+    return CSprite::getInstance()->getAllCssInclude();
+  }
+
   public static function getCssInclude($spriteName, $imageType = null){
-    return SpriteStyleRegistry::getCssInclude($spriteName, $imageType = null);
-  }
-
-
-
-
-  protected static function arToStr($array, $depth = 0){
-    $tab = '';
-    if($depth > 0){
-      $tab = implode('', array_fill(0, $depth, "\t"));
-    }
-    
-    $text="array(\n";
-    $count=count($array);
-    $x =0 ;
-    foreach ($array as $key=>$value){
-       $x++;
-       if (is_array($value)){
-         if(substr($text,-1,1)==')')    $text .= ',';
-         $text.=$tab."\t".'"'.$key.'"'." => ".self::arToStr($value, $depth+1);
-         if ($count!=$x) $text.=",\n";
-         continue;
-       }
-    
-       $text.=$tab."\t"."\"$key\" => \"$value\""; 
-       if ($count!=$x) $text.=",\n";
-    }
-    
-    $text.="\n".$tab.")\n";
-    if(substr($text, -4, 4)=='),),')$text.='))';
-    return $text;
+    return CSprite::getInstance()->getCssInclude($spriteName, $imageType);
   }
 
 }
-?>

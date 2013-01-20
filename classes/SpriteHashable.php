@@ -1,4 +1,5 @@
 <?php
-interface SpriteHashable{
+interface SpriteHashable
+{
   public function getHash();
 }

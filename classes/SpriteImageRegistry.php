@@ -1,105 +1,164 @@
 <?php
 class SpriteImageRegistry{
 
-  protected static $registry = array();  
-  
-  public static function register($imgPath, array $params = array()){
+  /**
+   * The CSprite parent object.
+   *
+   * @var CSprite
+   * @access protected
+   */
+  protected $cSprite;
+
+  /**
+   * The style registry.
+   * @var array
+   */
+  protected $registry;
+
+  public function __construct(cSprite &$cSprite)
+  {
+    $this->cSprite = $cSprite;
+
+    $this->registry = array();
+  } // __construct()
+
+  /**
+   * Get this object CSprite instance.
+   * @return CSprite A CSprite instance.
+   */
+  public function getCSprite()
+  {
+    return $this->cSprite;
+  } // getCSprite()
+
+  public function register($imgPath, array $params = array())
+  {
     $relPath = $imgPath;
-    $absPath = SpriteConfig::get('rootDir').$relPath;
-    
-    if(is_dir($absPath)){
-      $files = self::buildFileList($relPath);
-    }
-    else{
-      $files = array($relPath);
+    $absPath = SpriteConfig::get('rootDir') . $relPath;
+
+    if((! file_exists($absPath)) && file_exists($imgPath))
+    {
+      $absPath = $imgPath;
     }
 
-    foreach($files as $imgFile){
-      self::addImage($imgFile, $params);
-    }   
+    if(is_dir($absPath))
+    {
+      $files = $this->buildFileList($absPath);
+    }
+    elseif(filesize($absPath))
+    {
+      $files = array($absPath);
+    }
+    else
+    {
+      throw new Exception(sprintf('cSprites error: image path "%s" does not exists.', $imgPath));
+    }
+
+    foreach($files as $imgFile)
+    {
+      if(! is_dir($imgFile)) // Ignore bogus directories.
+      {
+        $this->addImage($imgFile, $params);
+      } // Ignore bogus directories.
+    }
+
+    // Process sprites after each directory addition.
+    $this->processSprites();
   }
-  
-  public static function getRegistry(){
-    return self::$registry;
+
+  public function getRegistry()
+  {
+    return $this->registry;
   }
-   
-  public static function processSprites(){
-    if(count(self::$registry)){
+
+  public function processSprites()
+  {
+    if(count($this->registry))
+    {
       //call_user_func(self::$packerClass.'::pack', self::$registry, self::$longestWidth, self::$longestHeight, self::$totalArea);
-      foreach(self::$registry as &$sprite){
+      foreach($this->registry as $sprite)
+      {
         //First lets prepare all the sprite properties
         $sprite->prepareSprite();
         //Now lets sort it
-        call_user_func(SpriteConfig::get('sorter').'::sort',$sprite);
+        call_user_func(SpriteConfig::get('sorter').'::sort',&$sprite);
         //And pack the sprite
-        call_user_func(SpriteConfig::get('packer').'::pack', $sprite);
+        call_user_func(SpriteConfig::get('packer').'::pack', &$sprite);
         //Write the sprite image to a file
         SpriteImageWriter::writeImages($sprite);
         //Update all the sprite styles to the registry
-        SpriteStyleRegistry::addSprite($sprite);
+        $this->getCSprite()->getStyleRegistry()->addSprite($sprite);
       }
       //SpriteStyleRegistry::processCssMetaFiles();
     }
     SpriteCache::updateCache();
   }
-  
-  protected static function loadSorter(){
-    if (include_once 'sorters/' .SpriteConfig::getSorter().'.php') {
+
+  protected function loadSorter()
+  {
+    if (include_once 'sorters/' .SpriteConfig::getSorter().'.php')
+    {
       $classname = SpriteConfig::getSorter();
       return new $classname;
     }
-    else {
+    else
+    {
       throw new SpriteException ('Sorter class not found.');
     }
   }
-  
-  protected static function addImage($path, $params){
+
+  protected function addImage($path, $params)
+  {
     $spriteName = @$params['name'];
     $imageType  = @$params['imageType'];
-    
-    try{
+
+    try
+    {
       $spriteImage = new SpriteImage($path, $params);
     }
-    catch(SpriteException $e){
+    catch(SpriteException $e)
+    {
       return NULL;
     }
-    
+
     $type = ($imageType)?($imageType):($spriteImage->getType());
     $tempSprite = new SpriteSprite($spriteName, $type);
-    
-    if(!isset(self::$registry[$tempSprite->getKey()])){
 
-      self::$registry[$tempSprite->getKey()] = $tempSprite;
+    if(!isset($this->registry[$tempSprite->getKey()]))
+    {
+      $this->registry[$tempSprite->getKey()] = $tempSprite;
     }
-    self::$registry[$tempSprite->getKey()][] = $spriteImage;
+
+    $this->registry[$tempSprite->getKey()][] = $spriteImage;
   }
-  
-  public static function buildFileList($path){
-    $root = SpriteConfig::get('rootDir');
-    $path = $root.$path;
+
+  public function buildFileList($path)
+  {
     $files = array();
     $fileObjs = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-    foreach($fileObjs as $name=>$fileObj){
-      if($fileObj->isFile()){
-        $files[] = preg_replace('`'.$root.'`si', '', $name, 1);        
+    foreach($fileObjs as $name=>$fileObj)
+    {
+      if($fileObj->isFile())
+      {
+        $files[] = $name;
       }
     }
+
     return $files;
   }
-    
-  public static function debug(){
+
+  public function debug(){
     $output = '';
-    foreach(self::$registry as $type=>$imageAr){
+    foreach(self::$registry as $type=>$imageAr)
+    {
       $output .=  $type."<br>";
-      foreach($imageAr as $key=>$image){
+      foreach($imageAr as $key=>$image)
+      {
         $output .= $image;
       }
     }
     return $output;
   }
-  
-  public static function getHash(){
-    return md5(serialize(self::$registry));
-  }
+
 }
 ?>

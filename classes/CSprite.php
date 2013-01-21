@@ -28,32 +28,44 @@ class CSprite
   protected $spriteStyleRegistry;
 
   /**
-   * This object instance.
+   * This a named array of CSprite objects.
    *
-   * @var CSprite
+   * @var array
    * @access protected
    */
   protected static $instance = null;
 
   /**
-   * Retrieve the singleton instance of this class.
+   * Retrieve an instance of this class.
    *
+   * @param  string $instance_name A optionnal instance name.
    * @return sfContext A sfContext implementation instance.
    */
-  public static function getInstance()
+  public static function getInstance($instance_name = 'default')
   {
     if (!isset(self::$instance))
     {
-      $class = __CLASS__;
-      self::$instance = new $class();
+      self::$instance = array();
     }
 
-    return self::$instance;
+    if (!isset(self::$instance[$instance_name]))
+    {
+      $class = __CLASS__;
+      self::$instance[$instance_name] = new $class();
+    }
+
+    return self::$instance[$instance_name];
   }
 
-  public static function hasInstance()
+  /**
+   * Retrieve an instance of this class.
+   *
+   * @param  string $instance_name A optionnal instance name.
+   * @return sfContext A sfContext implementation instance.
+   */
+  public static function hasInstance($instance_name = 'default')
   {
-    return isset(self::$instance);
+    return isset(self::$instance[$instance_name]);
   }
 
   /**

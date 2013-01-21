@@ -1,23 +1,29 @@
 <?php
-class SpriteDefaultPacker extends SpriteAbstractPacker{
-  
-  public static function pack(SpriteSprite &$sprite){
+class SpriteDefaultPacker extends SpriteAbstractPacker
+{
+  public static function pack(SpriteSprite &$sprite)
+  {
     $root = new SpriteDefaultPackingNode();
     $root->setRectangle(self::getBoundingBox($sprite));
 
-    foreach($sprite as &$spriteImage){
+    foreach($sprite as &$spriteImage)
+    {
       $root->insert($spriteImage);
     }
   }
-  
-  protected static function getBoundingBox(SpriteSprite $sprite){
+
+  protected static function getBoundingBox(SpriteSprite $sprite)
+  {
     $bbSize = ($box = SpriteConfig::get('boundingBoxSize'))?($box):(10000);
-    
-    if($sprite->getRepeatable()){
-      if(strtolower($sprite->getRepeatable()) == 'x'){
+
+    if($sprite->getRepeatable())
+    {
+      if(strtolower($sprite->getRepeatable()) == 'x')
+      {
         return new SpriteRectangle(0,0,$sprite->getLongestWidth(), $bbSize);
       }
-      else{
+      else
+      {
         return new SpriteRectangle(0,0,$bbSize, $sprite->getLongestHeight());
       }
     }
@@ -26,7 +32,3 @@ class SpriteDefaultPacker extends SpriteAbstractPacker{
       (new SpriteRectangle(0,0,$bbSize, $sprite->getLongestHeight()));
   }
 }
-
-
-
-?>

@@ -1,10 +1,9 @@
 <?php
-//require_once('config/spyc/spyc.php5');
 
 define('SPRITE_ROOT_DIR', realpath(dirname(__FILE__)));
 
 if(!defined('SPRITE_CONFIG_FILE')){
-  define('SPRITE_CONFIG_FILE', SPRITE_ROOT_DIR.'/config/config.yml');
+  define('SPRITE_CONFIG_FILE', SPRITE_ROOT_DIR . '/config/config.yml');
 }
 
 /*This will only work with PHP 5 >= 5.1.2*/
@@ -45,39 +44,33 @@ require_once('parsers/SpriteDefaultCssParser.php');
 require_once('sorters/SpriteAreaSorter.php');
 require_once('sorters/SpriteLongestDimensionSorter.php');*/
 
-
-SpriteConfig::set('rootDir', spriteGetWebRoot());
-
-class SpriteBootstrap{
-
-  public static function autoload($class_name){
-    if(is_array($class_name)){
+class SpriteBootstrap
+{
+  public static function autoload($class_name)
+  {
+    if(is_array($class_name))
+    {
      // $class_name = $class_name[0];
     }
-    if(file_exists(SPRITE_ROOT_DIR.'/classes/'.$class_name.'.php')){
+    if(file_exists(SPRITE_ROOT_DIR.'/classes/'.$class_name.'.php'))
+    {
       require_once 'classes/'.$class_name . '.php';
     }
-    else if(file_exists(SPRITE_ROOT_DIR.'/sorters/'.$class_name.'.php')){
+    else if(file_exists(SPRITE_ROOT_DIR.'/sorters/'.$class_name.'.php'))
+    {
       require_once 'sorters/'.$class_name.'.php';
     }
-    else if(file_exists(SPRITE_ROOT_DIR.'/packers/'.$class_name.'.php')){
+    else if(file_exists(SPRITE_ROOT_DIR.'/packers/'.$class_name.'.php'))
+    {
       require_once 'packers/'.$class_name.'.php';
     }
-    else if(file_exists(SPRITE_ROOT_DIR.'/parsers/'.$class_name.'.php')){
+    else if(file_exists(SPRITE_ROOT_DIR.'/parsers/'.$class_name.'.php'))
+    {
       require_once 'parsers/'.$class_name.'.php';
     }
-    else{
+    else
+    {
       //throw new Exception('Class loading Failed');
     }
   }
-}
-
-function spriteGetWebRoot(){
-  $local= getenv("SCRIPT_NAME");
-  $absolute = realpath(basename($local));
-  $absolute =str_replace("\\","/",$absolute);
-  $fullPath = preg_replace('`'.$local.'`si', '', $absolute, 1);
-  return $fullPath;
-
-}
-?>
+} // SpriteBootstrap()

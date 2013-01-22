@@ -1,4 +1,6 @@
-<?php //SPRITE_EXAMPLE_REL_DIR - this should already be defined ?>
+<?php
+// SPRITE_EXAMPLE_REL_DIR - this should already be defined
+?>
 
 .dev {<?php echo Sprite::ppStyle(SPRITE_EXAMPLE_REL_DIR.'/images/dev-republik.gif', 
             array('inline'=>true)); ?>}

@@ -1,5 +1,14 @@
 <?php
-class SpriteSprite extends ArrayObject implements SpriteHashable{
+/**
+ * The SpriteSprite class. Define a sprite image.
+ *
+ * @package  CSprite
+ * @author   Adrian Mummey
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
+class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstractConfigSource
+{
   protected $spriteName;
   protected $type;
   protected $spriteImages;
@@ -10,8 +19,24 @@ class SpriteSprite extends ArrayObject implements SpriteHashable{
   protected $repeatable;
   protected $hash;
 
-  public function __construct($spriteName, $type)
+  /**
+   * The SpriteConfig source object.
+   * @var SpriteAbstractConfigSource
+   */
+  protected $spriteConfigSource;
+
+  /**
+   * Instanciate a new SpriteImageWriter.
+   * 
+   * @param SpriteAbstractConfigSource $spriteConfigSource A SpriteConfig source.
+   * @param string                     $spriteName         A name.
+   * @param string                     $type               A image type.
+   * @access public
+   * @return SpriteSprite This object.
+   */
+  public function __construct(SpriteAbstractConfigSource &$spriteConfigSource, $spriteName, $type)
   {
+    $this->spriteConfigSource = $spriteConfigSource;
   	$this->hash = null;
     $this->spriteImages = array();
     $this->spriteName = $spriteName;
@@ -19,9 +44,54 @@ class SpriteSprite extends ArrayObject implements SpriteHashable{
     parent::__construct($this->spriteImages, ArrayObject::ARRAY_AS_PROPS);
   }
 
+  /**
+   * Get this object parent SpriteAbstractConfigSource.
+   *
+   * @access  public
+   * @return SpriteAbstractConfigSource A SpriteConfig source.
+   */
+  public function getSpriteConfigSource()
+  {
+    return $this->spriteConfigSource;
+  } // getSpriteConfigSource()
+
+  /**
+   * Get this object CSprite instance.
+   *
+   * @access  public
+   * @return  CSprite A CSprite instance.
+   */
+  public function getCSprite()
+  {
+    return $this->spriteConfigSource->getCSprite();
+  } // getCSprite()
+
+  /**
+   * Get this object CSprite config instance.
+   *
+   * @access  public
+   * @return  CSpriteConfig A CSpriteConfig instance.
+   */
+  public function getSpriteConfig()
+  {
+    return $this->spriteConfigSource->getSpriteConfig();
+  } // getSpriteConfig()
+
+  /**
+   * Get this object CSprite cache manager.
+   *
+   * @access  public
+   * @return SpriteCache a SpriteCache object.
+   */
+  public function getSpriteCache()
+  {
+    return $this->spriteConfigSource->getSpriteCache();
+  } // getSpriteCache()
+
   public function append($spriteImage)
   {
-    if (!($spriteImage instanceof SpriteImage)){
+    if (!($spriteImage instanceof SpriteImage))
+    {
       throw new SpriteException( 'You can only add SpriteImages to this Sprite' );
     }
 
@@ -39,7 +109,7 @@ class SpriteSprite extends ArrayObject implements SpriteHashable{
     $index = ($index)?($index):($spriteImage->getKey());
     parent::offsetSet($index, $spriteImage);
 
-    $sorterclass = SpriteConfig::get('sorter');
+    $sorterclass = $this->getSpriteConfig()->get('sorter');
     call_user_func($sorterclass.'::sort', &$this);
 
     $this->updateMaximums($spriteImage);
@@ -90,7 +160,7 @@ class SpriteSprite extends ArrayObject implements SpriteHashable{
   public function getHash(){
     if(!$this->hash)
     {
-      $this->hash = md5(serialize($this).SpriteConfig::getHash().$this->getType());
+      $this->hash = md5(serialize($this) . $this->getSpriteConfig()->getHash() . $this->getType());
     }
 
     return $this->hash;
@@ -108,7 +178,7 @@ class SpriteSprite extends ArrayObject implements SpriteHashable{
 
   public function getRelativePath()
   {
-    return SpriteConfig::get('relImageOutputDirectory').'/'.$this->getFilename();
+    return $this->getSpriteConfig()->get('relImageOutputDirectory').'/'.$this->getFilename();
   }
 
   public function getKey()

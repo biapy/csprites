@@ -52,4 +52,4 @@ transparentImagePath: "./1_1_trans.gif"
 
 #cacheTime in Minutes, set to 0 for no cache. During development set to 0
 cacheTime: 20
-  
+

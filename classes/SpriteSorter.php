@@ -1,5 +1,5 @@
 <?php
-interface SpriteSorter{
+interface SpriteSorter
+{
   public static function sort(SpriteSprite &$sprite);
 }
-?>

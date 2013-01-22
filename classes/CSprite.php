@@ -1,19 +1,34 @@
 <?php
-
-class CSprite
+/**
+ * The CSprite class. Automize the creation of CSS sprites from various images.
+ *
+ * @package  CSprite
+ * @author   Adrian Mummey
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
+class CSprite implements SpriteAbstractConfigSource
 {
 
   /**
-   * Templates registry 
-   * 
+   * Instance name
+   *
+   * @var string
+   * @access protected
+   */
+  protected $name;
+
+  /**
+   * Templates registry
+   *
    * @var SpriteTemplateRegistry
    * @access protected
    */
   protected $spriteTemplateRegistry;
 
   /**
-   * Images registry 
-   * 
+   * Images registry
+   *
    * @var SpriteImageRegistry
    * @access protected
    */
@@ -28,91 +43,185 @@ class CSprite
   protected $spriteStyleRegistry;
 
   /**
-   * This a named array of CSprite objects.
-   *
-   * @var array
+   * Sprite configuration
+   * 
+   * @var CSpriteConfig
    * @access protected
    */
-  protected static $instance = null;
+  protected $spriteConfig;
+
+  /**
+   * Sprite cache manager
+   * 
+   * @var SpriteCache
+   * @access protected
+   */
+  protected $spriteCache;
+
+  /**
+   * A named array of CSprite objects.
+   *
+   * @var array
+   * @static
+   * @access protected
+   */
+  protected static $instances = null;
 
   /**
    * Retrieve an instance of this class.
    *
-   * @param  string $instance_name A optionnal instance name.
-   * @return sfContext A sfContext implementation instance.
+   * @param   string $instance_name  A optionnal instance name.
+   * @access  public
+   * @static
+   * @return  CSprite              A CSprite implementation instance.
    */
   public static function getInstance($instance_name = 'default')
   {
-    if (!isset(self::$instance))
+    if (!isset(self::$instances))
     {
-      self::$instance = array();
+      self::$instances = array();
     }
 
-    if (!isset(self::$instance[$instance_name]))
+    if (!isset(self::$instances[$instance_name]))
     {
       $class = __CLASS__;
-      self::$instance[$instance_name] = new $class();
+      self::$instances[$instance_name] = new $class($instance_name);
     }
 
-    return self::$instance[$instance_name];
-  }
+    return self::$instances[$instance_name];
+  } // getInstance()
 
   /**
-   * Retrieve an instance of this class.
+   * Check if a instance exists.
    *
-   * @param  string $instance_name A optionnal instance name.
-   * @return sfContext A sfContext implementation instance.
+   * @param   string $instance_name  A optionnal instance name.
+   * @access  public
+   * @static
+   * @return  boolean                True if the instance exists.
    */
   public static function hasInstance($instance_name = 'default')
   {
-    return isset(self::$instance[$instance_name]);
-  }
+    return isset(self::$instances[$instance_name]);
+  } // hasInstance()
 
   /**
-   * Instanciate a new Sprite.
-   * 
+   * Instanciate a new CSprite.
+   *
+   * @param  string $name The instance name.
    * @access public
-   * @return Sprite the new sprite.
+   * @return CSprite the new sprite.
    */
-  public function __construct()
+  public function __construct($name = 'default')
   {
+    $this->name = $name;
     $this->spriteTemplateRegistry = new SpriteTemplateRegistry($this);
     $this->spriteImageRegistry = new SpriteImageRegistry($this);
     $this->spriteStyleRegistry = new SpriteStyleRegistry($this);
+    $this->spriteConfig = CSpriteConfig::getInstance($name);
+    $this->spriteCache = new SpriteCache($this);
 
-    return $this;
+    if (!isset(self::$instances))
+    {
+      self::$instances = array();
+    }
+    self::$instances[$name] = $this;
   } // __construct()
 
+  /**
+   * Get this object CSprite instance.
+   *
+   * @access  public
+   * @return  CSprite A CSprite instance.
+   */
+  public function getCSprite()
+  {
+    return $this;
+  } // getCSprite()
+
+  /**
+   * Get this instance configuration.
+   * @return CSpriteConfig a CSpriteConfig object.
+   */
+  public function getSpriteConfig()
+  {
+    return $this->spriteConfig;
+  } // getSpriteConfig()
+
+  /**
+   * Get this instance cache manager.
+   * @return SpriteCache a SpriteCache object.
+   */
+  public function getSpriteCache()
+  {
+    return $this->spriteCache;
+  } // getSpriteCache()
+
+  /**
+   * Get this instance name.
+   *
+   * @access  public
+   * @return string a name.
+   */
+  public function getName()
+  {
+    return $this->name;
+  } // getName()
+
+  /**
+   * Get the template registry.
+   *
+   * @access  public
+   * @return  SpriteTemplateRegistry a template registry.
+   */
   public function getTemplateRegistry()
   {
     return $this->spriteTemplateRegistry;
-  }
+  } // getTemplateRegistry()
 
+  /**
+   * Get the image registry.
+   *
+   * @access  public
+   * @return  SpriteImageRegistry a image registry.
+   */
   public function getImageRegistry()
   {
     return $this->spriteImageRegistry;
-  }
+  } // getImageRegistry()
 
+  /**
+   * Get the style registry.
+   *
+   * @access  public
+   * @return  SpriteStyleRegistry a style registry.
+   */
   public function getStyleRegistry()
   {
     return $this->spriteStyleRegistry;
-  }
+  } // getStyleRegistry()
 
+  /**
+   * Compute the sprite image and its CSS rules.
+   *
+   * @access  public
+   * @return  CSprite this object.
+   */
   public function process()
   {
     $this->spriteImageRegistry->processSprites();
-    $this->spriteTemplateRegistry->processTemplates();    
+    $this->spriteTemplateRegistry->preprocessTemplates();
+    $this->spriteTemplateRegistry->processTemplates();
     $this->spriteStyleRegistry->processCss();
 
     return $this;
   } // process()
 
   /**
-   * déclare un nouveau fichier template.
-   * @param  string $relativeTemplatePath Le chemin relatif vers le modèle.
-   * @param  string $outputName           Le nom du modèle.
-   * @param  string $outputPath           Le chemin de sortie du modèle.
-   * @return Sprite                       Renvoie cet objet.
+   * Register a new template file
+   * @param  string $relativeTemplatePath A template file relative path.
+   * @param  string $outputName           An optionnal template name.
+   * @param  string $outputPath           An optionnal output path.
+   * @return CSprite                      This object.
    */
   public function registerTemplate($relativeTemplatePath, $outputName = null, $outputPath = null)
   {
@@ -121,32 +230,44 @@ class CSprite
     return $this;
   } // registerTemplate()
 
+  /**
+   * Get the SpriteStyleNode for the given image path.
+   * @param  string $path     A image relative path.
+   * @return SpriteStyleNode  A SpriteStyleNode.
+   */
   public function getStyleNode($path)
   {
-    return $this->spriteStyleRegistry->getStyleNode($path);
-  }
+    $node = $this->spriteStyleRegistry->getStyleNode($path);
+
+    if(! $node)
+    {
+      throw new SpriteException(sprintf('Error: no node found for path "%s".', $path), 102);
+    }
+
+    return $node;
+  } // getStyleNode()
 
   public function style($path, array $params = array())
   {
-    return ($node = $this->spriteStyleRegistry->getStyleNode($path))?($node->renderStyle($params)):('');
-  }
+    return $this->getStyleNode($path)->renderStyle($params);
+  } // style()
 
   public function ppRegister($path, array $params = array())
   {
     $this->spriteImageRegistry->register($path, $params);
-  }
+  } // ppRegister()
 
   public function ppStyle($path, array $params = array())
   {
     //SpriteImageRegistry::register($path, @$params['name'], @$params['imageType']);
-    $this->SpriteImageRegistry->register($path, $params);
-    return "<?php echo $this->style('".$path."',".self::arToStr($params)."); ?>";
-  }
+    $this->spriteImageRegistry->register($path, $params);
+    return sprintf("<?php echo CSprite::getInstance('%s')->style('%s', %s); ?>", $this->getName(), $path, self::arToStr($params));
+  } // ppStyle()
 
   public function styleWithBackground($path, array $params = array())
   {
-    return ($node = $this->spriteStyleRegistry->getStyleNode($path))?($node->renderStyleWithBackground($params)):('');
-  }
+    return $this->getStyleNode($path)->renderStyleWithBackground($params);
+  } // styleWithBackground()
 
   /**
    * Generate the image tag for the style node.
@@ -167,25 +288,22 @@ class CSprite
    */
   public function image_tag($path, $params = array(), $attributes = array())
   {
-    return ($node = $this->spriteStyleRegistry->getStyleNode($path))?($node->image_tag($params, $attributes)):('');
-  }
+    return $this->getStyleNode($path)->image_tag($params, $attributes);
+  } // image_tag()
 
   public function styleClass($path, $params = array())
   {
-    return ($node = $this->spriteStyleRegistry->getStyleNode($path))?($node->renderClass($params)):('');
-  }
+    return $this->getStyleNode($path)->renderClass($params);
+  } // styleClass()
 
   public function getAllCssInclude()
   {
     return $this->spriteStyleRegistry->getAllCssInclude();
-  }
+  } // getAllCssInclude()
 
   public function getCssInclude($spriteName, $imageType = null){
     return $this->spriteStyleRegistry->getCssInclude($spriteName, $imageType);
-  }
-
-
-
+  } // getCssInclude()
 
   protected static function arToStr($array, $depth = 0)
   {
@@ -213,7 +331,7 @@ class CSprite
     $text.="\n".$tab.")\n";
     if(substr($text, -4, 4)=='),),')$text.='))';
     return $text;
-  }
+  } // arToStr()
 
 }
 

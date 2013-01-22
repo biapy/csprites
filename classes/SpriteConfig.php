@@ -1,4 +1,13 @@
 <?php
+/**
+ * The SpriteConfig class. Static proxy to CSpriteConfig default instance.
+ * This class ensure compatibility with CSprite 1.0.
+ *
+ * @package  CSprite
+ * @author   Adrian Mummey
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
 class SpriteConfig
 {
   const JPG   = 'jpg';
@@ -6,37 +15,53 @@ class SpriteConfig
   const PNG   = 'png';
   const PNG8  = 'png8';
 
-  protected static $config;
-
+  /**
+   * Print a debug message if debug is active in default CSpriteConfig instance.
+   * @param  string $message The debug message.
+   * @access  public
+   * @static
+   * @return CSpriteConfig This object.
+   */
   public static function debug($message)
   {
-    if(self::get('debug'))
-    {
-      echo $message."<br/>"."\n";
-    }
-  }
+    return CSpriteConfig::getInstance()->debug($message);
+  } // debug()
 
-  public static function get($data)
+  /**
+   * Get a configuration value from default CSpriteConfig instance.
+   * 
+   * @param  string $name A value name.
+   * @access  public
+   * @static
+   * @return mixed        The value.
+   */
+  public static function get($name)
   {
-    if(!is_array(self::$config))
-    {
-      self::$config = Spyc::YAMLLoad(SPRITE_CONFIG_FILE);
-    }
-    return @(self::$config[$data]);
-  }
+    return CSpriteConfig::getInstance()->get($name);
+  } // get()
 
+  /**
+   * Set a configuration value in default CSpriteConfig instance.
+   * @param  string $name   A value name.
+   * @param  mixed  $value  A value.
+   * @access  public
+   * @static
+   * @return  CSpriteConfig This object.
+   */
   public static function set($name, $value)
   {
-    if(!is_array(self::$config))
-    {
-      self::$config = Spyc::YAMLLoad(SPRITE_CONFIG_FILE);
-    }
+    return CSpriteConfig::getInstance()->set($name, $value);
+  } // set()
 
-    self::$config[$name] = $value;
-  }
-
+  /**
+   * Get the hash from default CSpriteConfig instance.
+   * 
+   * @access  public
+   * @static
+   * @return string A hash.
+   */
   public static function getHash()
   {
-    return md5(serialize(self::$config));
-  }
+    return CSpriteConfig::getInstance()->getHash();
+  } // getHash()
 }

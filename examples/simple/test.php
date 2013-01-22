@@ -18,7 +18,6 @@
   css postprocessing.
   */
 
-
 //We can define the location of the Sprite Config file we want to use PRIOR to the inclusion of Sprite.php
 define('SPRITE_CONFIG_FILE', realpath(dirname(__FILE__)).'/config.yml');
 
@@ -40,8 +39,6 @@ SpriteConfig::set('transparentImagePath', SPRITE_EXAMPLE_REL_DIR.'/1_1_trans.gif
 //to the SpriteImageRegistry. You can do this multiple times for different directories
 //See the advanced example for registering individual filesize
 Sprite::ppRegister(SPRITE_EXAMPLE_REL_DIR.'/images');
-
-
 
 //Now we run the processSprites() funciton. This MUST be run before you can access any of the
 //Sprites in your template or elsewhere.
@@ -67,9 +64,9 @@ Sprite::process();
       <p>Notice that it scans all the files and divides them up by image type. So you get a sprite for each, jpg, png and gif;</p>
       <?php
       //Outputting the full sprites wouldn't be something you normally do so it takes a little more code
-      foreach(SpriteStyleRegistry::getStyleNodes() as $spriteGroup):?>
+      foreach(CSprite::getInstance()->getStyleRegistry()->getStyleNodes() as $spriteGroup):?>
         <?php $backgroundNode = $spriteGroup->getBackgroundStyleNode(); ?>
-        <h4><?php echo $backgroundNode->getBackgroundImage(); ?></h4> 
+        <h4><?php echo $backgroundNode->getBackgroundImage(); ?></h4>
         <img src="<?php echo $backgroundNode->getBackgroundImage(); ?>"/>
       <?php endforeach; ?>
       <br>
@@ -77,47 +74,50 @@ Sprite::process();
     <td>
       <h3>Individual Images</h3>
       <p>These images come from the generated sprites and dynamic css styles.</p>
+
+      <h4>Pseudo Image Tag w/Css Classes</h4>
       <p>
-        <h4>Pseudo Image Tag w/Css Classes</h4>
         <code>
         &lt;?php echo Sprite::image_tag(SPRITE_EXAMPLE_REL_DIR.'/images/wave.jpg'); ?&gt;<br/><br/>
-        <?php $output =  Sprite::image_tag(SPRITE_EXAMPLE_REL_DIR.'/images/wave.jpg'); ?>
+        <?php $output = Sprite::image_tag(SPRITE_EXAMPLE_REL_DIR.'/images/wave.jpg'); ?>
         HTML Output is:<br/><?php echo htmlspecialchars($output); ?>
         </code><br/>
         <?php echo $output; ?>
       </p>
+
+      <h4>Pseudo Image Tag w/Inline Css Styles</h4>
       <p>
-        <h4>Pseudo Image Tag w/Inline Css Styles</h4>
         <code>
         &lt;?php echo Sprite::image_tag(SPRITE_EXAMPLE_REL_DIR.'/images/camels.jpg', array('inline'=>true)); ?&gt;<br/><br/>
-        <?php $output =  Sprite::image_tag(SPRITE_EXAMPLE_REL_DIR.'/images/camels.png', array('inline'=>true)); ?>
+        <?php $output = Sprite::image_tag(SPRITE_EXAMPLE_REL_DIR.'/images/camels.png', array('inline'=>true)); ?>
         HTML Output is:<br/><?php echo htmlspecialchars($output); ?>
         </code><br/>
         <?php echo $output; ?>
       </p>
+
+      <h4>Div Element with Background Image using Css Classes</h4>
       <p>
-        <h4>Div Element with Background Image using Css Classes</h4>
         <code>
         &lt;div class="&lt;?php echo Sprite::styleClass(SPRITE_EXAMPLE_REL_DIR.'/images/Box In Hand.png'); ?&gt;"&gt;&lt;/div&gt;
         <br/><br/>
-        <?php $output =  Sprite::styleClass(SPRITE_EXAMPLE_REL_DIR.'/images/Box In Hand.png');  ?>
+        <?php $output = Sprite::styleClass(SPRITE_EXAMPLE_REL_DIR.'/images/Box In Hand.png');  ?>
         HTML Output is:<br/>&lt;div class="<?php echo htmlspecialchars($output); ?>"&gt;&lt;/div&gt;
         </code><br/>
         <div class="<?php echo $output?>"></div>
       </p>
+
+      <h4>Div Element with Background Image using Inline Css Styles</h4>
       <p>
-        <h4>Div Element with Background Image using Inline Css Styles</h4>
         <code>
         &lt;div style="&lt;?php echo Sprite::styleWithBackground(SPRITE_EXAMPLE_REL_DIR.'/images/coffee.JPG', array('inline'=>true)); ?&gt;"&gt;&lt;/div&gt;
         <br/><br/>
-        <?php $output =  Sprite::styleWithBackground(SPRITE_EXAMPLE_REL_DIR.'/images/coffee.JPG', array('inline'=>true));  ?>
+        <?php $output = Sprite::styleWithBackground(SPRITE_EXAMPLE_REL_DIR.'/images/coffee.JPG', array('inline'=>true));  ?>
         HTML Output is:<br/>&lt;div style="<?php echo htmlspecialchars($output); ?>"&gt;&lt;/div&gt;
         </code><br/>
         <div style="<?php echo $output?>"></div>
       </p>
     </td>
   </tr>
-  
 
 </table>
 </body>

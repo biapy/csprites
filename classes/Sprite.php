@@ -1,5 +1,12 @@
 <?php
-
+/**
+ * The Sprite class. Static proxy to CSprite default instance.
+ * This class ensure compatibility with CSprite 1.0.
+ *
+ * @package  CSprite
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
 class Sprite
 {
   public static function process()

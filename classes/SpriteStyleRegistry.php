@@ -1,5 +1,13 @@
 <?php
-class SpriteStyleRegistry
+/**
+ * The SpriteStyleRegistry class. Manage the sprite CSS styles.
+ *
+ * @package  CSprite
+ * @author   Adrian Mummey
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
+class SpriteStyleRegistry implements SpriteAbstractConfigSource
 {
 
   /**
@@ -16,9 +24,21 @@ class SpriteStyleRegistry
    */
   protected $registry;
 
+  /**
+   * This object hash
+   * @var string
+   */
   protected $hash;
 
-  public function __construct(cSprite &$cSprite)
+
+  /**
+   * Instanciate a new SpriteStyleRegistry.
+   *
+   * @param  CSprite $cSprite The parent object.
+   * @access public
+   * @return SpriteStyleRegistry This object.
+   */
+  public function __construct(CSprite &$cSprite)
   {
     $this->cSprite = $cSprite;
 
@@ -35,9 +55,29 @@ class SpriteStyleRegistry
     return $this->cSprite;
   } // getCSprite()
 
+  /**
+   * Get this object CSprite config instance.
+   *
+   * @access  public
+   * @return  CSpriteConfig A CSpriteConfig instance.
+   */
+  public function getSpriteConfig()
+  {
+    return $this->cSprite->getSpriteConfig();
+  } // getSpriteConfig()
+
+  /**
+   * Get this object CSprite cache manager.
+   * @return SpriteCache a SpriteCache object.
+   */
+  public function getSpriteCache()
+  {
+    return $this->cSprite->getSpriteCache();
+  } // getSpriteCache()
+
   public function addSprite(SpriteSprite &$sprite)
   {
-    $this->registry[$sprite->getKey()] = new SpriteStyleGroup($sprite);
+    $this->registry[$sprite->getKey()] = new SpriteStyleGroup($this, $sprite);
 
     return $this;
   } // addSprite()
@@ -46,13 +86,13 @@ class SpriteStyleRegistry
   {
     $allCss = '';
     foreach($this->registry as &$styleGroup){
-      $filepath = SpriteConfig::get('rootDir') . $styleGroup->getRelativePath();
+      $filepath = $this->getSpriteConfig()->get('rootDir') . $styleGroup->getRelativePath();
       $tempCss = $styleGroup->getCss();
 
       file_put_contents($filepath, $tempCss);
       $allCss .= $tempCss;
     }
-    file_put_contents(SpriteConfig::get('rootDir') . $this->getRelativePath(), $allCss);
+    file_put_contents($this->getSpriteConfig()->get('rootDir') . $this->getRelativePath(), $allCss);
   } // processCss()
 
   public function getStyleNodes()
@@ -73,7 +113,7 @@ class SpriteStyleRegistry
   }
 
   public function getCssInclude($spriteName, $imageType = null){
-    $tempSprite = new SpriteSprite($spriteName, $imageType);
+    $tempSprite = new SpriteSprite($this, $spriteName, $imageType);
     if(isset($this->registry[$tempSprite->getKey()])){
       $sprite = $this->registry[$tempSprite->getKey()];
       return '<link rel="stylesheet" type="text/css" title="'.$sprite->getKey().'" media="all" href="'.$sprite->getRelativePath().'" />'."\n";
@@ -86,7 +126,7 @@ class SpriteStyleRegistry
   }
 
   public function getRelativePath(){
-    return SpriteConfig::get('relTmplOutputDirectory').'/'.$this->getFileName();
+    return $this->getSpriteConfig()->get('relTmplOutputDirectory').'/'.$this->getFileName();
   }
 
   public function getFileName(){

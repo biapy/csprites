@@ -1,5 +1,13 @@
 <?php
-class SpriteTemplateRegistry
+/**
+ * The SpriteTemplateRegistry class. Manage the sprite templates.
+ *
+ * @package  CSprite
+ * @author   Adrian Mummey
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
+class SpriteTemplateRegistry implements SpriteAbstractConfigSource
 {
 
   /**
@@ -16,7 +24,14 @@ class SpriteTemplateRegistry
    */
   protected $registry;
 
-  public function __construct(cSprite &$cSprite)
+  /**
+   * Instanciate a new SpriteTemplateRegistry.
+   *
+   * @param  CSprite $cSprite The parent object.
+   * @access public
+   * @return SpriteTemplateRegistry This object.
+   */
+  public function __construct(CSprite &$cSprite)
   {
     $this->cSprite = $cSprite;
 
@@ -32,11 +47,31 @@ class SpriteTemplateRegistry
     return $this->cSprite;
   } // getCSprite()
 
+  /**
+   * Get this object CSprite config instance.
+   *
+   * @access  public
+   * @return  CSpriteConfig A CSpriteConfig instance.
+   */
+  public function getSpriteConfig()
+  {
+    return $this->cSprite->getSpriteConfig();
+  } // getSpriteConfig()
+
+  /**
+   * Get this object CSprite cache manager.
+   * @return SpriteCache a SpriteCache object.
+   */
+  public function getSpriteCache()
+  {
+    return $this->cSprite->getSpriteCache();
+  } // getSpriteCache()
+
   public function registerTemplate($relTemplatePath, $outputName, $outputPath = null){
-    $absPath = SpriteConfig::get('rootDir').$relTemplatePath;
+    $absPath = $this->getSpriteConfig()->get('rootDir').$relTemplatePath;
     if(file_exists($absPath))
     {
-      $this->registry[] = new SpriteTemplate($relTemplatePath, $outputName, $outputPath);  
+      $this->registry[] = new SpriteTemplate($this, $relTemplatePath, $outputName, $outputPath);
     }
     else
     {
@@ -51,20 +86,22 @@ class SpriteTemplateRegistry
     //Do some directory checks
     if(count($this->registry))
     {
-      if(!is_dir(SpriteConfig::get('rootDir').SpriteConfig::get('relPreprocessorDirectory')))
+      if(!is_dir($this->getSpriteConfig()->get('rootDir').$this->getSpriteConfig()->get('relPreprocessorDirectory')))
       {
-        throw new SpriteException(SpriteConfig::get('rootDir').SpriteConfig::get('relPreprocessorDirectory').' - this is not a valid directory');
+        throw new SpriteException($this->getSpriteConfig()->get('rootDir').$this->getSpriteConfig()->get('relPreprocessorDirectory').' - this is not a valid directory');
       }
-      if(!is_writable(SpriteConfig::get('rootDir').SpriteConfig::get('relPreprocessorDirectory')))
+      if(!is_writable($this->getSpriteConfig()->get('rootDir').$this->getSpriteConfig()->get('relPreprocessorDirectory')))
       {
-        throw new SpriteException(SpriteConfig::get('rootDir').SpriteConfig::get('relPreprocessorDirectory').' - this directory is not writable');
+        throw new SpriteException($this->getSpriteConfig()->get('rootDir').$this->getSpriteConfig()->get('relPreprocessorDirectory').' - this directory is not writable');
       }
       if(is_array($this->registry))
       {
         foreach($this->registry as $template)
         {
-          if(SpriteCache::needsCreation(SpriteConfig::get('rootDir').SpriteConfig::get('relPreprocessorDirectory').'/'.$template->getPreprocessName())){
-            call_user_func(SpriteConfig::get('parser').'::parse', $template);
+          if($this->getSpriteCache()->needsCreation($this->getSpriteConfig()->get('rootDir').$this->getSpriteConfig()->get('relPreprocessorDirectory').'/'.$template->getPreprocessName())){
+            $parser_class = $this->getSpriteConfig()->get('parser');
+            $parser = new $parser_class($this);
+            $parser->parse($template);
             $this->preprocess($template);
           }
         }
@@ -74,8 +111,8 @@ class SpriteTemplateRegistry
 
   protected function preprocess($template)
   {
-    $inputFile  = SpriteConfig::get('rootDir') . $template->getRelativePath();
-    $outputFile = SpriteConfig::get('rootDir') . SpriteConfig::get('relPreprocessorDirectory').'/'.$template->getPreprocessName();
+    $inputFile  = $this->getSpriteConfig()->get('rootDir') . $template->getRelativePath();
+    $outputFile = $this->getSpriteConfig()->get('rootDir') . $this->getSpriteConfig()->get('relPreprocessorDirectory').'/'.$template->getPreprocessName();
     if(file_exists($outputFile))
     {
       unlink($outputFile);
@@ -85,6 +122,7 @@ class SpriteTemplateRegistry
     require_once($inputFile);
     $output = ob_get_clean();
     $processedString = preg_replace(array('`\[\?php`si','`\?\]`si') , array('<?php', '?>'),$output);
+
     if(file_put_contents($outputFile, $processedString) === false)
     {
       throw new SpriteException($outputFile.' - could not write preprocess file.');
@@ -98,7 +136,7 @@ class SpriteTemplateRegistry
     {
       foreach($this->registry as $template)
       {
-        if(SpriteCache::needsCreation(SpriteConfig::get('rootDir').$template->getRelOutputPath()))
+        if($this->getSpriteCache()->needsCreation($this->getSpriteConfig()->get('rootDir') . $template->getRelOutputPath()))
         {
           $this->process($template);
         }
@@ -107,20 +145,29 @@ class SpriteTemplateRegistry
   }
 
   protected function process($template){
-    $inputFile  = SpriteConfig::get('rootDir').SpriteConfig::get('relPreprocessorDirectory').'/'.$template->getPreprocessName();
-    $outputFile = SpriteConfig::get('rootDir').$template->getRelOutputPath();
-    if(file_exists($outputFile)){
+    $inputFile  = $this->getSpriteConfig()->get('rootDir').$this->getSpriteConfig()->get('relPreprocessorDirectory').'/'.$template->getPreprocessName();
+    $outputFile = $this->getSpriteConfig()->get('rootDir').$template->getRelOutputPath();
+
+    if(! file_exists($inputFile))
+    {
+      return;
+    }
+
+    if(file_exists($outputFile))
+    {
       unlink($outputFile);
     }
 
     ob_start();
     require_once($inputFile);
     $output = ob_get_clean();
-    if(SpriteConfig::get('deletePreprocess')){
+    if($this->getSpriteConfig()->get('deletePreprocess'))
+    {
       unlink($inputFile);
     }
 
-    if(file_put_contents($outputFile, $output) === false){
+    if(file_put_contents($outputFile, $output) === false)
+    {
       throw new SpriteException($outputFile.' - could not write preprocess file.');
     }
     return;

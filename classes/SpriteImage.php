@@ -1,61 +1,186 @@
-	<?php
-
-class SpriteImage implements SpriteIterable, SpriteHashable
+<?php
+/**
+ * The SpriteImage class. Describe a image to be integrated in sprite.
+ *
+ * @package  CSprite
+ * @author   Adrian Mummey
+ * @author   Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+ * @version  2.0.0
+ */
+class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfigSource
 {
 
+  /**
+   * Image absolute path.
+   * @var string
+   */
   protected $imgPath;
+
+  /**
+   * Image relative path.
+   * @var string
+   */
   protected $relativePath;
+
+  /**
+   * Image type.
+   * @var string
+   */
   protected $imgType;
+
+  /**
+   * Image file extension.
+   * @var string
+   */
   protected $imgExtension;
+
+  /**
+   * A associative array containing image sizes.
+   * @var array
+   */
   protected $sizeArray;
+
+  /**
+   * The area used by the image on the sprite.
+   * @var integer
+   */
   protected $area;
+
+  /**
+   * The image file size.
+   * @var integer
+   */
   protected $fileSize;
+
+  /**
+   * A associative array containing image informations.
+   * @var array
+   */
   protected $imageInfo;
+
+  /**
+   * The image position in the sprite.
+   * @var SpriteRectangle
+   */
   protected $position;
+
+  /**
+   * The image margins in the sprite.
+   * @var SpriteRectangle
+   */
   protected $margin;
+
+  /**
+   * A associative array of parameters.
+   * @var array
+   */
   protected $params;
 
+  /**
+   * This object hash.
+   * @var string
+   */
   protected $hash;
 
-  public function __construct($path, array $params = array())
+  /**
+   * The SpriteImageRegistry parent object.
+   * @var SpriteImageRegistry
+   */
+  protected $spriteImageRegistry;
+
+  /**
+   * Instanciate a new SpriteImage.
+   *
+   * @param  SpriteImageRegistry $spriteImageRegistry  The parent object.
+   * @param  string              $path                 The image absolute path.
+   * @param  array               $params               A associative parameters array.
+   * @access public
+   * @return SpriteImage the new image.
+   */
+  public function __construct(SpriteImageRegistry $spriteImageRegistry, $path, array $params = array())
   {
+    $this->spriteImageRegistry = $spriteImageRegistry;
     $this->hash = null;
 
     $this->imgPath = $path;
-    $this->relativePath = self::relativePath(SpriteConfig::get('rootDir'), $path);;
+    $this->relativePath = self::relativePath($this->getSpriteConfig()->get('rootDir'), $path);;
 
     if(!($this->fileSize = filesize($this->imgPath)))
     {
-      SpriteConfig::debug("file existence problem");
+      $this->getSpriteConfig()->debug("file existence problem");
       throw new SpriteException($this->imgPath.' : File does not exist or is size 0');
     }
 
     if(!($this->sizeArray = getimagesize($this->imgPath, $this->imageinfo)))
     {
-      SpriteConfig::debug($this->imgPath."image size read problem");
+      $this->getSpriteConfig()->debug($this->imgPath."image size read problem");
       throw new SpriteException($this->imgPath.' : Image size could not be read');
     }
 
     if(isset($this->sizeArray['bits']) && isset($this->sizeArray['mime']))
     {
-      SpriteConfig::debug('bits: '.$this->sizeArray['bits'].' channels:'.@$this->sizeArray['channels'].' mime:'.$this->sizeArray['mime']);
+      $this->getSpriteConfig()->debug('bits: '.$this->sizeArray['bits'].' channels:'.@$this->sizeArray['channels'].' mime:'.$this->sizeArray['mime']);
     }
 
     else
     {
-      SpriteConfig::debug('bits: unknown channels:'.@$this->sizeArray['channels'].' mime: unknown');
+      $this->getSpriteConfig()->debug('bits: unknown channels:'.@$this->sizeArray['channels'].' mime: unknown');
     }
 
     $this->processType();
     if(!$this->sizeArray)
     {
-      SpriteConfig::debug('Image size misread');
+      $this->getSpriteConfig()->debug('Image size misread');
       throw new SpriteException($this->imgPath.' : Image size could not be read');
     }
 
     $this->setMargins($params);
     $this->params = $params;
-  }
+  } // __construct()
+
+  /**
+   * Get this object parent SpriteImageRegistry.
+   * 
+   * @access  public
+   * @return SpriteImageRegistry A SpriteImageRegistry.
+   */
+  public function getSpriteImageRegistry()
+  {
+    return $this->spriteImageRegistry;
+  } // getSpriteImageRegistry()
+
+  /**
+   * Get this object CSprite instance.
+   *
+   * @access  public
+   * @return  CSprite A CSprite instance.
+   */
+  public function getCSprite()
+  {
+    return $this->spriteImageRegistry->getCSprite();
+  } // getCSprite()
+
+  /**
+   * Get this object CSprite config instance.
+   *
+   * @access  public
+   * @return  CSpriteConfig A CSpriteConfig instance.
+   */
+  public function getSpriteConfig()
+  {
+    return $this->spriteImageRegistry->getSpriteConfig();
+  } // getSpriteConfig()
+
+  /**
+   * Get this object CSprite cache manager.
+   * 
+   * @access  public
+   * @return SpriteCache a SpriteCache object.
+   */
+  public function getSpriteCache()
+  {
+    return $this->spriteImageRegistry->getSpriteCache();
+  } // getSpriteCache()
 
   public static function relativePath($from_path, $to_path, $path_separator = DIRECTORY_SEPARATOR)
   {
@@ -213,7 +338,7 @@ class SpriteImage implements SpriteIterable, SpriteHashable
   public function getCssClass()
   {
     return 'sprite'.$this->getHash();
-  }
+  } // getCssClass()
 
   public function updateAlignment(array $spriteParams = array())
   {
@@ -225,31 +350,31 @@ class SpriteImage implements SpriteIterable, SpriteHashable
         {
           case 'left':
             $rightMargin = $spriteParams['longestWidth'] - ($this->margin->left + $this->sizeArray[0]);
-            $this->margin = new SpriteRectangle($this->margin->left, $this->margin->top, $rightMargin, $this->margin->bottom);
-            $this->position = new SpriteRectangle(0,0, $spriteParams['longestWidth'], $this->position->bottom);
+            $this->margin = new SpriteRectangle($this->spriteImageRegistry, $this->margin->left, $this->margin->top, $rightMargin, $this->margin->bottom);
+            $this->position = new SpriteRectangle($this->spriteImageRegistry, 0,0, $spriteParams['longestWidth'], $this->position->bottom);
             break;
 
           case 'right':
             $leftMargin = $spriteParams['longestWidth'] - ($this->margin->right + $this->sizeArray[0]);
-            $this->margin = new SpriteRectangle($leftMargin, $this->margin->top, $this->margin->right, $this->margin->bottom);
-            $this->position = new SpriteRectangle(0,0, $spriteParams['longestWidth'], $this->position->bottom);
+            $this->margin = new SpriteRectangle($this->spriteImageRegistry, $leftMargin, $this->margin->top, $this->margin->right, $this->margin->bottom);
+            $this->position = new SpriteRectangle($this->spriteImageRegistry, 0,0, $spriteParams['longestWidth'], $this->position->bottom);
             break;
 
           case 'top':
             $bottomMargin = $spriteParams['longestHeight'] - ($this->margin->top + $this->sizeArray[1]);
-            $this->margin = new SpriteRectangle($this->margin->left, $this->margin->top, $this->margin->right, $bottomMargin);
-            $this->position = new SpriteRectangle(0,0, $this->position->right, $spriteParams['longestHeight']);
+            $this->margin = new SpriteRectangle($this->spriteImageRegistry, $this->margin->left, $this->margin->top, $this->margin->right, $bottomMargin);
+            $this->position = new SpriteRectangle($this->spriteImageRegistry, 0,0, $this->position->right, $spriteParams['longestHeight']);
             break;
 
           case 'bottom':
             $topMargin = $spriteParams['longestHeight'] - ($this->margin->bottom + $this->sizeArray[1]);
-            $this->margin = new SpriteRectangle($this->margin->left, $topMargin, $this->margin->right, $this->margin->bottom);
-            $this->position = new SpriteRectangle(0,0, $this->position->right, $spriteParams['longestHeight']);
+            $this->margin = new SpriteRectangle($this->spriteImageRegistry, $this->margin->left, $topMargin, $this->margin->right, $this->margin->bottom);
+            $this->position = new SpriteRectangle($this->spriteImageRegistry, 0,0, $this->position->right, $spriteParams['longestHeight']);
             break;
         }//end switch
       }
     }
-  }
+  } // updateAlignment()
 
   protected function processType()
   {
@@ -258,18 +383,18 @@ class SpriteImage implements SpriteIterable, SpriteHashable
     if($this->getExtension() == 'png')
     {
       //$this->imgType = $this->getExtension().'-'.$this->getColorDepth();
-      $this->imgType = $this->getExtension();      
+      $this->imgType = $this->getExtension();
     }
     else
     {
       $this->imgType = $this->getExtension();
     }
-    if(!in_array(strtolower($this->getExtension()), SpriteConfig::get('acceptedTypes')))
+    if(!in_array(strtolower($this->getExtension()), $this->getSpriteConfig()->get('acceptedTypes')))
     {
-      SpriteConfig::debug('Extension Type Mismatch: '.$this->getExtension());
+      $this->getSpriteConfig()->debug('Extension Type Mismatch: '.$this->getExtension());
       throw new SpriteException($this->getExtension().' : is not an acceptable image type.');
     }
-  }
+  } // processType()
 
   protected function setMargins(array $params = array())
   {
@@ -278,15 +403,15 @@ class SpriteImage implements SpriteIterable, SpriteHashable
     {
       if(is_array($params['sprite-margin']))
       {
-        $this->margin = new SpriteRectangle($params['sprite-margin'][3], $params['sprite-margin'][0], $params['sprite-margin'][1], $params['sprite-margin'][2]);
-        $this->position = new SpriteRectangle(0, 0, $this->sizeArray[0] + $this->margin->left + $this->margin->right, $this->sizeArray[1] + $this->margin->top + $this->margin->bottom);
+        $this->margin = new SpriteRectangle($this->spriteImageRegistry, $params['sprite-margin'][3], $params['sprite-margin'][0], $params['sprite-margin'][1], $params['sprite-margin'][2]);
+        $this->position = new SpriteRectangle($this->spriteImageRegistry, 0, 0, $this->sizeArray[0] + $this->margin->left + $this->margin->right, $this->sizeArray[1] + $this->margin->top + $this->margin->bottom);
       }
     }
     else
     {
-        $this->margin = new SpriteRectangle(0,0,0,0);
-        $this->position = new SpriteRectangle(0, 0, $this->sizeArray[0], $this->sizeArray[1]);
+        $this->margin = new SpriteRectangle($this->spriteImageRegistry, 0,0,0,0);
+        $this->position = new SpriteRectangle($this->spriteImageRegistry, 0, 0, $this->sizeArray[0], $this->sizeArray[1]);
     }
-  }
+  } // setMargins()
 }
 

@@ -371,6 +371,12 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
     return $output;
   }
 
+  /**
+   * Compute this object hash, based on the relative path.
+   *
+   * @access  public
+   * @return  string A MD5 hash.
+   */
   public function getHash(){
     if(!$this->hash)
     {
@@ -378,11 +384,17 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
     }
 
     return $this->hash;
-  }
+  } // getHasht();
 
+  /**
+   * Compute the CSS class name for this image.
+   *
+   * @access  public
+   * @return  string A CSS class name.
+   */
   public function getCssClass()
   {
-    return 'sprite'.$this->getHash();
+    return 'csprite-' . $this->getHash();
   } // getCssClass()
 
   public function updateAlignment(array $spriteParams = array())

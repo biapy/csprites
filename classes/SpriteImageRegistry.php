@@ -215,17 +215,15 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
       $params['imageType'] = $spriteImage->getType();
     }
 
-    $sprite = new SpriteSprite($this, $params);
+    $sprite_key = SpriteSprite::computeKey($spriteName, $params['imageType']);
 
-    if(!isset($this->registry[$sprite->getKey()]))
+    if(!isset($this->registry[$sprite_key]))
     {
-      $this->registry[$sprite->getKey()] = $sprite;
+      $sprite = new SpriteSprite($this, $params);
+      $this->registry[$sprite_key] = $sprite;
     }
 
-    $this->registry[$sprite->getKey()][] = $spriteImage;
-
-    //Update all the sprite styles to the registry
-    $this->getCSprite()->getStyleRegistry()->addSprite($this->registry[$sprite->getKey()]);
+    $this->registry[$sprite_key]->add($spriteImage);
 
     return $this;
   } // addImage()

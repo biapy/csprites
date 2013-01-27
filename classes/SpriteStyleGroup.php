@@ -9,15 +9,38 @@
  */
 class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbstractConfigSource
 {
+  /**
+   * This object SpriteStyleNode contents
+   * @var array
+   * @access protected
+   */
   protected $spriteStyleNodes;
+
+  /**
+   * This object associated SpriteSprite
+   * @var SpriteSprite
+   * @access  protected
+   */
   protected $sprite;
+
+  /**
+   * This object background style node
+   * @var SpriteStyleNode
+   * @access  protected
+   */
   protected $backgroundStyleNode;
 
+  /**
+   * This object hash.
+   * @var string
+   * @access  protected
+   */
   protected $hash;
 
   /**
    * The SpriteConfig source object.
    * @var SpriteAbstractConfigSource
+   * @access  protected
    */
   protected $spriteConfigSource;
 
@@ -38,12 +61,16 @@ class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbst
     parent::__construct($this->spriteStyleNodes, ArrayObject::ARRAY_AS_PROPS);
 
     $this->backgroundStyleNode = new SpriteStyleNode($this, null, 'sprite'.md5($this->sprite->getRelativePath()), null, $this->sprite->getRelativePath());
+
+    $this->hash = null;
+
+    // Add each existing image from the sprite to this object.
     foreach($this->sprite as $spriteImage)
     {
       $this->addStylesToGroup($spriteImage);
     }
 
-    $this->hash = null;
+    $this->sprite->setSpriteStyleGroup($this);
   } // __construct()
 
   /**
@@ -90,6 +117,17 @@ class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbst
     return $this->spriteConfigSource->getSpriteCache();
   } // getSpriteCache()
 
+  /**
+   * Get this object associated SpriteSprite.
+   *
+   * @access  public
+   * @return SpriteSprite A SpriteSprite object.
+   */
+  public function getSprite()
+  {
+    return $this->sprite;
+  } // getSprite()
+
   public function getBackgroundStyleNode()
   {
     return $this->backgroundStyleNode;
@@ -110,6 +148,12 @@ class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbst
     return $this->getHash().'.css';
   }
 
+  /**
+   * Compute this object hash.
+   *
+   * @access  public
+   * @return  string A hash.
+   */
   public function getHash(){
     if(!$this->hash)
     {
@@ -117,8 +161,14 @@ class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbst
     }
 
     return $this->hash;
-  }
+  } // getHash()
 
+  /**
+   * Compute the CSS rules of this object.
+   *
+   * @access public
+   * @return string a CSS ruleset.
+   */
   public function getCss()
   {
     $css = $this->getBackgroundStyleNode()->renderCss()."\n\n";
@@ -128,13 +178,18 @@ class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbst
     }
 
     return $css;
-  }
+  } // getCss()
 
-  protected function addStylesToGroup(SpriteImage $spriteImage)
+  /**
+   * Add SpriteStyleNode of the given SpriteImage to this object.
+   * @param  SpriteImage $spriteImage a SpriteImage.
+   * @access protected
+   */
+  public function addStylesToGroup(SpriteImage $spriteImage)
   {
-     parent::offsetSet($spriteImage->getKey(),
+    parent::offsetSet($spriteImage->getKey(),
           new SpriteStyleNode($this, $spriteImage, $spriteImage->getCssClass(),
           $this->getBackgroundStyleNode(), $this->sprite->getRelativePath()));
-  }
+  } // addStylesToGroup()
 
 }

@@ -50,9 +50,9 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
    *
    * @param SpriteAbstractConfigSource $spriteConfigSource  A SpriteConfig source.
    * @param SpriteImage     $spriteImage      The SpriteImage associated to the node.
-   * @param string          $class            [description]
+   * @param string          $class            A CSS class name.
    * @param SpriteStyleNode $backgroundNode   An optionnal custom background style node.
-   * @param [type]          $backgroundImage [description]
+   * @param SpiteImage      $backgroundImage  An optionnal background image.
    */
   public function __construct(SpriteAbstractConfigSource $spriteConfigSource, SpriteImage $spriteImage = null, $class, SpriteStyleNode $backgroundNode = null, $backgroundImage = null)
   {
@@ -184,7 +184,7 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
     $tag .= ' />';
 
     return $tag;
-  }
+  } // image_tag()
 
   public function getBackgroundImage()
   {

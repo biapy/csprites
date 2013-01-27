@@ -93,6 +93,13 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
   protected $spriteConfigSource;
 
   /**
+   * The SpriteStyleGroup associated to this object.
+   * @var SpriteStyleGroup
+   * @access  protected
+   */
+  protected $spriteStyleGroup;
+
+  /**
    * Instanciate a new SpriteSprite.
    *
    * Valid params are:
@@ -118,6 +125,9 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
     $this->hoverYOffset = isset($params['hoverYOffset']) ? $params['hoverYOffset'] : 0;
 
     parent::__construct($this->spriteImages, ArrayObject::ARRAY_AS_PROPS);
+
+    //Update all the sprite styles to the registry
+    $this->getCSprite()->getStyleRegistry()->addSprite($this);
   } // __construct()
 
   /**
@@ -197,6 +207,28 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
     return ($this->hoverXOffset != 0) || ($this->hoverYOffset != 0);
   } // hasHoverOffset()
 
+  public function getSpriteStyleGroup()
+  {
+    return $this->spriteStyleGroup;
+  } // getSpriteStyleGroup()
+
+  public function setSpriteStyleGroup(SpriteStyleGroup $spriteStyleGroup)
+  {
+    if(! $this == $spriteStyleGroup->getSprite())
+    {
+      throw new SpriteException('Error: SpriteStyleGroup Sprite must match this object.', 302);
+    }
+
+    $this->spriteStyleGroup = $spriteStyleGroup;
+  } // setSpriteStyleGroup()
+
+  /**
+   * Handle the addition of a SpriteImage to this SpriteSprite.
+   * Override the default append ArrayObject method.
+   *
+   * @param  SpriteImage $spriteImage A SpriteImage
+   * @access public
+   */
   public function append($spriteImage)
   {
     if (!($spriteImage instanceof SpriteImage))
@@ -206,8 +238,16 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
 
     $this->offsetSet(null, $spriteImage);
     $this->updateMaximums($spriteImage);
-  }
+  } // append()
 
+  /**
+   * Handle the update of a SpriteImage in this SpriteSprite.
+   * Override the default offsetSet ArrayObject method.
+   *
+   * @param  mixed $index             A optionnal index value.
+   * @param  SpriteImage $spriteImage A SpriteImage
+   * @access  public
+   */
   public function offsetSet($index, $spriteImage)
   {
     if (!($spriteImage instanceof SpriteImage))
@@ -223,7 +263,9 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
 
     $this->updateMaximums($spriteImage);
     $this->updateRepeatable($spriteImage);
-  }
+
+    $this->spriteStyleGroup->addStylesToGroup($spriteImage);
+  } // offsetSet()
 
   public function getType()
   {
@@ -242,6 +284,7 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
 
   public function add(SpriteImage $spriteImage)
   {
+    $this[] = $spriteImage;
     //  $sorterclass::addImage($this, $spriteImage);
     // $this->spriteImages[$spriteImage->getKey()] = $spriteImage;
   }
@@ -266,14 +309,21 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
     return $this->totalArea;
   }
 
-  public function getHash(){
+  /**
+   * Compute this object hash.
+   *
+   * @access  public
+   * @return  string A hash.
+   */
+  public function getHash()
+  {
     if(!$this->hash)
     {
       $this->hash = md5(serialize($this) . $this->getSpriteConfig()->getHash() . $this->getType());
     }
 
     return $this->hash;
-  }
+  } // getHash()
 
   public function getImageExtension()
   {
@@ -290,11 +340,30 @@ class SpriteSprite extends ArrayObject implements SpriteHashable, SpriteAbstract
     return $this->getSpriteConfig()->get('relImageOutputDirectory').'/'.$this->getFilename();
   }
 
+  /**
+   * Compute a SpriteSprite key.
+   * 
+   * @param  string $name A SpriteSprite name.
+   * @param  string $type A SpriteSprite type.
+   * @access  public
+   * @static
+   * @return string       A SpriteSprite key.
+   */
+  public static function computeKey($name, $type)
+  {
+    return ($name) ? $name . '-' . $type : $type;
+  } // computeKey()
+
+  /**
+   * Get this SpriteSprite key in SpriteImageRegistry.
+   *
+   * @access  public
+   * @return string A SpriteSprite key.
+   */
   public function getKey()
   {
-    $spriteName = ($this->spriteName)?($this->spriteName.'-'):('');
-    return $spriteName.$this->type;
-  }
+    return self::computeKey($this->spriteName, $this->type);
+  } // getKey()
 
   /**
    * Update all sprites images SpriteSprite data.

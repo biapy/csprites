@@ -31,7 +31,6 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
    */
   protected $hash;
 
-
   /**
    * Instanciate a new SpriteStyleRegistry.
    *
@@ -97,7 +96,8 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
   public function processCss()
   {
     $allCss = '';
-    foreach($this->registry as &$styleGroup){
+    foreach($this->registry as $styleGroup)
+    {
       $filepath = $this->getSpriteConfig()->get('rootDir') . $styleGroup->getRelativePath();
       $tempCss = $styleGroup->getCss();
 
@@ -133,13 +133,14 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
 
   /**
    * Get the SpriteStyleNode for the given path.
-   * 
+   *
    * @param  string  $path            A absolute or relative path.
    * @param  boolean $relative_forced True if given path is relative. Default to false.
    * @access public
    * @return SpriteStyleNode          The SpriteStyleNode of the path.
    */
-  public function getStyleNode($path, $relative_forced = false){
+  public function getStyleNode($path, $relative_forced = false)
+  {
     $node = null;
 
     foreach($this->registry as $spriteGroup){
@@ -158,14 +159,24 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
     return $node;
   } // getStyleNode()
 
-  public function getCssInclude($spriteName, $imageType = null){
-    $tempSprite = new SpriteSprite($this, array('name' => $spriteName, 'imageType' => $imageType));
-    if(isset($this->registry[$tempSprite->getKey()])){
-      $sprite = $this->registry[$tempSprite->getKey()];
-      return '<link rel="stylesheet" type="text/css" title="'.$sprite->getKey().'" media="all" href="'.$sprite->getRelativePath().'" />'."\n";
+  /**
+   * Get the CSS link tag for the given sprite.
+   *
+   * @param   string $spriteName  A sprite name
+   * @param   string $imageType   A image type
+   * @access  public
+   * @return  string A link HTML tag.
+   */
+  public function getCssInclude($spriteName = '', $imageType = null)
+  {
+    $sprite_key = SpriteSprite::computeKey($spriteName, $imageType);
+    if(isset($this->registry[$sprite_key])){
+      $sprite = $this->registry[$sprite_key];
+      return sprintf('<link rel="stylesheet" type="text/css" title="%s" media="all" href="%s" />', $sprite_key, $sprite->getRelativePath());
     }
+
     return '';
-  }
+  } // getCssInclude()
 
   public function getAllCssInclude(){
     return '<link rel="stylesheet" type="text/css" title="cSprite CSS" media="all" href="'.$this->getRelativePath().'" />'."\n";
@@ -179,14 +190,21 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
     return $this->getHash().'.css';
   }
 
-  public function getHash(){
+  /**
+   * Compute this object hash.
+   *
+   * @access  public
+   * @return  string A hash.
+   */
+  public function getHash()
+  {
     if(!$this->hash)
     {
       $this->hash = md5(serialize($this->registry));
     }
 
     return $this->hash;
-  }
+  } // getHas()
 
 }
 

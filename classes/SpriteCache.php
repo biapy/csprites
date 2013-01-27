@@ -95,8 +95,8 @@ class SpriteCache
   {
     $cacheTime = $this->getSpriteConfig()->get('cacheTime') * 60;
 
-    $tmplFiles  = SpriteImageRegistry::buildFileList($this->getSpriteConfig()->get('rootDir') . $this->getSpriteConfig()->get('relTmplOutputDirectory'));
-    $imageFiles = SpriteImageRegistry::buildFileList($this->getSpriteConfig()->get('rootDir') . $this->getSpriteConfig()->get('relImageOutputDirectory'));
+    $tmplFiles  = CSpriteTools::buildFileList($this->getSpriteConfig()->get('rootDir') . $this->getSpriteConfig()->get('relTmplOutputDirectory'));
+    $imageFiles = CSpriteTools::buildFileList($this->getSpriteConfig()->get('rootDir') . $this->getSpriteConfig()->get('relImageOutputDirectory'));
 
     $files = array_merge($tmplFiles, $imageFiles);
     foreach($files as $file)

@@ -12,7 +12,6 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
 
   /**
    * The CSprite parent object.
-   *
    * @var CSprite
    * @access protected
    */
@@ -21,12 +20,14 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
   /**
    * The style registry.
    * @var array
+   * @access  protected
    */
   protected $registry;
 
   /**
    * This object hash
    * @var string
+   * @access  protected
    */
   protected $hash;
 
@@ -48,6 +49,8 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
 
   /**
    * Get this object CSprite instance.
+   *
+   * @access  public
    * @return CSprite A CSprite instance.
    */
   public function getCSprite()
@@ -68,6 +71,8 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
 
   /**
    * Get this object CSprite cache manager.
+   *
+   * @access  public
    * @return SpriteCache a SpriteCache object.
    */
   public function getSpriteCache()
@@ -75,7 +80,14 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
     return $this->cSprite->getSpriteCache();
   } // getSpriteCache()
 
-  public function addSprite(SpriteSprite &$sprite)
+  /**
+   * Add the given image sprite to this registry.
+   *
+   * @param SpriteSprite $sprite An image sprite
+   * @access  public
+   * @return  SpriteStyleRegistry This object.
+   */
+  public function addSprite(SpriteSprite $sprite)
   {
     $this->registry[$sprite->getKey()] = new SpriteStyleGroup($this, $sprite);
 
@@ -100,7 +112,34 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
     return $this->registry;
   }
 
-  public function getStyleNode($path){
+  /**
+   * List available style nodes paths.
+   *
+   * @access public
+   * @return array A array of style nodes paths.
+   */
+  public function getStyleNodesPaths()
+  {
+    $paths = array();
+
+    foreach($this->registry as $spriteGroup){
+      $spriteGroup_paths = array_keys((array) $spriteGroup);
+
+      $paths = array_merge($paths, $spriteGroup_paths);
+    }
+
+    return $paths;
+  } // getStyleNodesPaths()
+
+  /**
+   * Get the SpriteStyleNode for the given path.
+   * 
+   * @param  string  $path            A absolute or relative path.
+   * @param  boolean $relative_forced True if given path is relative. Default to false.
+   * @access public
+   * @return SpriteStyleNode          The SpriteStyleNode of the path.
+   */
+  public function getStyleNode($path, $relative_forced = false){
     $node = null;
 
     foreach($this->registry as $spriteGroup){
@@ -109,11 +148,18 @@ class SpriteStyleRegistry implements SpriteAbstractConfigSource
         break;
       }
     }
+
+    if((! $node) && ! $relative_forced)
+    {
+      // Assume $path is absolute and retry with a supposed relative path.
+      $relative_path = CSpriteTools::relativePath($this->getSpriteConfig()->get('rootDir'), $path);;
+      return $this->getStyleNode($relative_path, true);
+    }
     return $node;
-  }
+  } // getStyleNode()
 
   public function getCssInclude($spriteName, $imageType = null){
-    $tempSprite = new SpriteSprite($this, $spriteName, $imageType);
+    $tempSprite = new SpriteSprite($this, array('name' => $spriteName, 'imageType' => $imageType));
     if(isset($this->registry[$tempSprite->getKey()])){
       $sprite = $this->registry[$tempSprite->getKey()];
       return '<link rel="stylesheet" type="text/css" title="'.$sprite->getKey().'" media="all" href="'.$sprite->getRelativePath().'" />'."\n";

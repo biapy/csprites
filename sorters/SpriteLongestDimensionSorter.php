@@ -1,7 +1,7 @@
 <?php
 class SpriteLongestDimensionSorter implements SpriteSorter
 {
-  public static function sort(SpriteSprite &$sprite)
+  public static function sort(SpriteSprite $sprite)
   {
     $sprite->uasort('SpriteLongestDimesionSorterCompare');
   }

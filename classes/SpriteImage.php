@@ -89,7 +89,28 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
   protected $spriteImageRegistry;
 
   /**
+   * The X background offset on hover.
+   * @var integer
+   * @access  protected
+   */
+  protected $hoverXOffset;
+
+  /**
+   * The Y background offset on hover.
+   * @var integer
+   * @access  protected
+   */
+  protected $hoverYOffset;
+
+  /**
    * Instanciate a new SpriteImage.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
    *
    * @param  SpriteImageRegistry $spriteImageRegistry  The parent object.
    * @param  string              $path                 The image absolute path.
@@ -99,22 +120,25 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
    */
   public function __construct(SpriteImageRegistry $spriteImageRegistry, $path, array $params = array())
   {
+    $this->hoverXOffset = isset($params['hoverXOffset']) ? $params['hoverXOffset'] : 0;
+    $this->hoverYOffset = isset($params['hoverYOffset']) ? $params['hoverYOffset'] : 0;
+
     $this->spriteImageRegistry = $spriteImageRegistry;
     $this->hash = null;
 
     $this->imgPath = $path;
-    $this->relativePath = self::relativePath($this->getSpriteConfig()->get('rootDir'), $path);;
+    $this->relativePath = CSpriteTools::relativePath($this->getSpriteConfig()->get('rootDir'), $path);;
 
     if(!($this->fileSize = filesize($this->imgPath)))
     {
       $this->getSpriteConfig()->debug("file existence problem");
-      throw new SpriteException($this->imgPath.' : File does not exist or is size 0');
+      throw new SpriteException($this->imgPath.' : File does not exist or is size 0', 202);
     }
 
     if(!($this->sizeArray = getimagesize($this->imgPath, $this->imageinfo)))
     {
       $this->getSpriteConfig()->debug($this->imgPath."image size read problem");
-      throw new SpriteException($this->imgPath.' : Image size could not be read');
+      throw new SpriteException($this->imgPath.' : Image size could not be read', 203);
     }
 
     if(isset($this->sizeArray['bits']) && isset($this->sizeArray['mime']))
@@ -131,7 +155,7 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
     if(!$this->sizeArray)
     {
       $this->getSpriteConfig()->debug('Image size misread');
-      throw new SpriteException($this->imgPath.' : Image size could not be read');
+      throw new SpriteException($this->imgPath.' : Image size could not be read', 204);
     }
 
     $this->setMargins($params);
@@ -182,17 +206,38 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
     return $this->spriteImageRegistry->getSpriteCache();
   } // getSpriteCache()
 
-  public static function relativePath($from_path, $to_path, $path_separator = DIRECTORY_SEPARATOR)
+  /**
+   * Get the hover X background offset of this image.
+   *
+   * @access public
+   * @return integer a background offset in pixels on the X axis.
+   */
+  public function getHoverXOffset()
   {
-    $exploded_from = explode($path_separator, rtrim($from_path, $path_separator));
-    $exploded_to = explode($path_separator, rtrim($to_path, $path_separator));
-    while(count($exploded_from) && count($exploded_to) && ($exploded_from[0] == $exploded_to[0]))
-    {
-      array_shift($exploded_from);
-      array_shift($exploded_to);
-    }
-    return str_pad("", count($exploded_from) * 3, '..'.$path_separator).implode($path_separator, $exploded_to);
-  }
+    return $this->hoverXOffset;
+  } // getHoverXOffset()
+
+  /**
+   * Get the hover Y background offset of this image.
+   *
+   * @access public
+   * @return integer a background offset in pixels on the Y axis.
+   */
+  public function getHoverYOffset()
+  {
+    return $this->hoverYOffset;
+  } // getHoverYOffset()
+
+  /**
+   * Check if image has an hover offset on X or Y axis.
+   *
+   * @access public
+   * @return boolean True if image has a hover offset.
+   */
+  public function hasHoverOffset()
+  {
+    return ($this->hoverXOffset != 0) || ($this->hoverYOffset != 0);
+  } // hasHoverOffset()
 
   public function getPath()
   {
@@ -378,7 +423,7 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
 
   protected function processType()
   {
-    $this->imgExtension = strtolower(pathinfo($this->getPath(), PATHINFO_EXTENSION));
+    $this->imgExtension = strtolower(MimeTypeTool::getExtensionByMimeType(MimeTypeTool::detectMimeType($this->getPath())));
 
     if($this->getExtension() == 'png')
     {
@@ -392,7 +437,7 @@ class SpriteImage implements SpriteIterable, SpriteHashable, SpriteAbstractConfi
     if(!in_array(strtolower($this->getExtension()), $this->getSpriteConfig()->get('acceptedTypes')))
     {
       $this->getSpriteConfig()->debug('Extension Type Mismatch: '.$this->getExtension());
-      throw new SpriteException($this->getExtension().' : is not an acceptable image type.');
+      throw new SpriteException($this->getPath() . ' : "' . $this->getExtension().'" is not an acceptable image type.', 201);
     }
   } // processType()
 

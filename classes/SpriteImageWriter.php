@@ -23,13 +23,15 @@ class SpriteImageWriter implements SpriteAbstractConfigSource
    * @access public
    * @return SpriteImageWriter This object.
    */
-  public function __construct(SpriteImageRegistry &$spriteImageRegistry)
+  public function __construct(SpriteImageRegistry $spriteImageRegistry)
   {
     $this->spriteImageRegistry = $spriteImageRegistry;
   } // __construct()
 
   /**
    * Get this object parent SpriteImageRegistry.
+   *
+   * @access  public
    * @return SpriteImageRegistry A SpriteImageRegistry.
    */
   public function getSpriteImageRegistry()
@@ -61,6 +63,8 @@ class SpriteImageWriter implements SpriteAbstractConfigSource
 
   /**
    * Get this object CSprite cache manager.
+   *
+   * @access  public
    * @return SpriteCache a SpriteCache object.
    */
   public function getSpriteCache()
@@ -68,7 +72,14 @@ class SpriteImageWriter implements SpriteAbstractConfigSource
     return $this->spriteImageRegistry->getSpriteCache();
   } // getSpriteCache()
 
-  public function writeImages(SpriteSprite &$sprite)
+  /**
+   * Add the given SpriteSprite images to the resulting sprite image.
+   *
+   * @param  SpriteSprite $sprite A SpriteSprite object.
+   * @access  public
+   * @return SpriteImageWrite This object.
+   */
+  public function writeImages(SpriteSprite $sprite)
   {
     $filePath = $sprite->getRelativePath();
 
@@ -95,6 +106,8 @@ class SpriteImageWriter implements SpriteAbstractConfigSource
           break;
       }
     }
+
+    return $this;
   } // writeImages()
 
   protected function getImageSize(SpriteSprite $sprite)

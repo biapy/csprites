@@ -11,17 +11,39 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
 {
   protected $style;
   protected $class;
-  protected $background_image;
+  protected $backgroundImage;
   protected $background_position;
   protected $width;
   protected $height;
   protected $backgroundNode;
 
   /**
+   * The X background offset on hover.
+   * @var integer
+   * @access  protected
+   */
+  protected $hoverXOffset;
+
+  /**
+   * The Y background offset on hover.
+   * @var integer
+   * @access protected
+   */
+  protected $hoverYOffset;
+
+  /**
    * The SpriteConfig source object.
    * @var SpriteAbstractConfigSource
+   * @access protected
    */
   protected $spriteConfigSource;
+
+  /**
+   * The source SpriteImage of this object.
+   * @var SpriteImage
+   * @access protected
+   */
+  protected $spriteImage;
 
   /**
    * Instanciate a new SpriteStyleNode.
@@ -30,23 +52,25 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
    * @param SpriteImage     $spriteImage      The SpriteImage associated to the node.
    * @param string          $class            [description]
    * @param SpriteStyleNode $backgroundNode   An optionnal custom background style node.
-   * @param [type]          $background_image [description]
+   * @param [type]          $backgroundImage [description]
    */
-  public function __construct(SpriteAbstractConfigSource &$spriteConfigSource, SpriteImage $spriteImage = null, $class, SpriteStyleNode $backgroundNode = null, $background_image = null)
+  public function __construct(SpriteAbstractConfigSource $spriteConfigSource, SpriteImage $spriteImage = null, $class, SpriteStyleNode $backgroundNode = null, $backgroundImage = null)
   {
     $this->spriteConfigSource = $spriteConfigSource;
 
     if($spriteImage)
     {
+      $this->spriteImage = $spriteImage;
       $this->background_position = array();
-      $position = $spriteImage->getPosition();
-      $this->background_position['left'] = -1 * $position->left;
-      $this->background_position['top']  = -1 * $position->top;
       $this->width = $spriteImage->getWidth();
       $this->height = $spriteImage->getHeight();
+
+      $this->hoverXOffset = $spriteImage->getHoverXOffset();
+      $this->hoverYOffset = $spriteImage->getHoverYOffset();
     }
+
     $this->class = $class;
-    $this->background_image = $background_image;
+    $this->backgroundImage = $backgroundImage;
     $this->backgroundNode = $backgroundNode;
   } // __construct()
 
@@ -164,13 +188,65 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
 
   public function getBackgroundImage()
   {
-    return $this->background_image;
+    return $this->backgroundImage;
   }
 
   /**
-   * Generate the background position CSS code..
+   * Get the hover X background offset of this image.
+   *
+   * @access public
+   * @return integer a background offset in pixels on the X axis.
+   */
+  public function getHoverXOffset()
+  {
+    return $this->hoverXOffset;
+  } // getHoverXOffset()
+
+  /**
+   * Get the hover Y background offset of this image.
+   *
+   * @access public
+   * @return integer a background offset in pixels on the Y axis.
+   */
+  public function getHoverYOffset()
+  {
+    return $this->hoverYOffset;
+  } // getHoverYOffset()
+
+  /**
+   * Check if image has an hover offset on X or Y axis.
+   *
+   * @access public
+   * @return boolean True if image has a hover offset.
+   */
+  public function hasHoverOffset()
+  {
+    return ($this->hoverXOffset != 0) || ($this->hoverYOffset != 0);
+  } // hasHoverOffset()
+
+  /**
+   * Get the background image position from the source sprite Image.
+   *
+   * @access  protected
+   * @return array An array of left and top background position in pixels.
+   */
+  protected function getBackgroundPosition()
+  {
+    if($this->spriteImage)
+    {
+      $position = $this->spriteImage->getPosition();
+      $this->background_position['left'] = -1 * $position->left;
+      $this->background_position['top']  = -1 * $position->top;
+    }
+
+    return $this->background_position;
+  } // getBackgroundPosition()
+
+  /**
+   * Compute the inline CSS background-position rule of this node.
    *
    * Available parameters are:
+   *  - align: image alignment (top, right, bottom, left).
    *  - augmentX: add a offset to background X position.
    *  - augmentY: add a offset to background Y position.
    *
@@ -182,40 +258,55 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
     $augmentX = (isset($params['augmentX']))?($params['augmentX']):(0);
     $augmentY = (isset($params['augmentY']))?($params['augmentY']):(0);
 
-    if(isset($params['align'])){
-      switch($params['align']){
-        case 'left':{
+    $background_position = $this->getBackgroundPosition();
+
+    if(isset($params['align']))
+    {
+      switch($params['align'])
+      {
+        case 'left':
           $left = 'left';
-          $top = $this->background_position['top'].'px';
+          $top = $background_position['top'].'px';
           break;
-        }
-        case 'right':{
+
+        case 'right':
           $left = 'right';
-          $top = $this->background_position['top'].'px';
+          $top = $background_position['top'].'px';
           break;
-        }
-        case 'bottom':{
-          $left = $this->background_position['left'].'px';
+
+        case 'bottom':
+          $left = $background_position['left'].'px';
           $top = 'bottom';
           break;
-        }
-        case 'top':{
-          $left = $this->background_position['left'].'px';
+
+        case 'top':
+          $left = $background_position['left'].'px';
           $top = 'top';
           break;
-        }
       }
     }
-    else{
-      $left = ($this->background_position['left'] + $augmentX).'px';
-      $top = ($this->background_position['top'] + $augmentY).'px';
+    else
+    {
+      $left = ($background_position['left'] + $augmentX).'px';
+      $top = ($background_position['top'] + $augmentY).'px';
     }
-    if($this->background_position){
+    if($background_position)
+    {
       return 'background-position: '.$left.' '.$top.' ; ';
     }
     return '';
-  }
+  } // renderBackgroundPosition()
 
+  /**
+   * Compute the inline CSS background-image rule of this node.
+   *
+   * Accepted parameters are:
+   *  - background : forced background-repeat value.
+   *
+   * @param  array  $params An array of parameters.
+   * @access public
+   * @return string A CSS inline style.
+   */
   public function renderBackground(array $params = array())
   {
     if($this->backgroundNode){
@@ -223,9 +314,9 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
     }
     else{
       $background = (isset($params['background']))?($params['background']):('no-repeat');
-      return 'background: url(\'' . $this->background_image . '\') ' . $background . ' ; ';
+      return 'background: url(\'' . $this->backgroundImage . '\') ' . $background . ' ; ';
     }
-  }
+  } // renderBackground()
 
   public function renderWidth()
   {
@@ -268,6 +359,20 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
     return $this->renderBgClass() . $this->renderImageClass();
   }
 
+  /**
+   * Compute the inline CSS rules of this node.
+   *
+   * Accepted parameters are:
+   *  - inline : true to enable inline display (add background image).
+   *  - background : forced background-repeat value.
+   *  - align: image alignment (top, right, bottom, left).
+   *  - augmentX: add a offset to background X position.
+   *  - augmentY: add a offset to background Y position.
+   *
+   * @param  array  $params An array of parameters.
+   * @access public
+   * @return string A CSS inline style.
+   */
   public function renderStyle(array $params=array())
   {
 
@@ -277,18 +382,32 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
     }
     else
     {
-      if(@$params['inline'])
+      if(isset($params['inline']) && $params['inline'])
       {
-        return $this->renderBackground($params).$this->renderBackgroundPosition($params).$this->renderSize();
+        return $this->renderStyleWithBackground($params);
       }
       else
       {
 
-        return $this->renderBackgroundPosition($params).$this->renderSize();
+        return $this->renderBackgroundPosition($params) . $this->renderSize();
       }
     }
-  }
+  } // renderStyle()
 
+  /**
+   * Compute the CSS inline CSS rules with background image.
+   *
+   * Accepted parameters are:
+   *  - inline : true to enable inline display.
+   *  - background : forced background-repeat value.
+   *  - align: image alignment (top, right, bottom, left).
+   *  - augmentX: add a offset to background X position.
+   *  - augmentY: add a offset to background Y position.
+   *
+   * @param  array  $params An array of parameters.
+   * @access public
+   * @return string A CSS inline style.
+   */
   public function renderStyleWithBackground(array $params=array())
   {
     if(isset($params['inline']) && $params['inline'])
@@ -299,12 +418,52 @@ class SpriteStyleNode implements SpriteAbstractConfigSource
     {
       //return $this->renderCssWithBackground($params);
     }
-  }
+  } // renderStyleWithBackground()
 
+  /**
+   * Compute the CSS rules for this node.
+   *
+   * Accepted parameters are:
+   *  - inline : true to enable inline display.
+   *  - background : forced background-repeat value.
+   *  - align: image alignment (top, right, bottom, left).
+   *  - augmentX: add a offset to background X position.
+   *  - augmentY: add a offset to background Y position.
+   *
+   * @param  array  $params An array of parameters.
+   * @access public
+   * @return string A CSS class ruleset.
+   */
   public function renderCss(array $params=array())
   {
-    return '.'.$this->class.' {'.$this->renderStyle($params).'} ';
-  }
+    $css = sprintf('.%s {%s} ', $this->class, $this->renderStyle($params));
+
+    if($this->hasHoverOffset())
+    {
+      $hover_params = $params;
+      if(isset($params['augmentX']))
+      {
+        $hover_params['augmentX'] += $this->getHoverXOffset();
+      }
+      else
+      {
+        $hover_params['augmentX'] = $this->getHoverXOffset();
+      }
+
+      if(isset($params['augmentY']))
+      {
+        $hover_params['augmentY'] += $this->getHoverYOffset();
+      }
+      else
+      {
+        $hover_params['augmentY'] = $this->getHoverYOffset();
+      }
+
+      $css .= sprintf('.%s:hover {%s}', $this->class, $this->renderBackgroundPosition($hover_params));
+    }
+
+    return $css;
+  } // renderCss()
 
   /*public function renderCssWithBackground(array $params=array()){
     return '.'.$this->class.' {'.$this->renderStyleWithBackground($params).'} ';

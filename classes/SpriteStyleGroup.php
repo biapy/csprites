@@ -29,7 +29,7 @@ class SpriteStyleGroup extends ArrayObject implements SpriteHashable, SpriteAbst
    * @access public
    * @return SpriteStyleGroup This object.
    */
-  public function __construct(SpriteAbstractConfigSource &$spriteConfigSource, SpriteSprite &$sprite)
+  public function __construct(SpriteAbstractConfigSource $spriteConfigSource, SpriteSprite $sprite)
   {
     $this->spriteConfigSource = $spriteConfigSource;
 

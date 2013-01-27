@@ -241,7 +241,7 @@ class CSprite implements SpriteAbstractConfigSource
 
     if(! $node)
     {
-      throw new SpriteException(sprintf('Error: no node found for path "%s".', $path), 102);
+      throw new SpriteException(sprintf('Error: no node found for path "%s". Available nodes are: %s.', $path, implode(', ', $this->spriteStyleRegistry->getStyleNodesPaths())), 102);
     }
 
     return $node;
@@ -252,16 +252,55 @@ class CSprite implements SpriteAbstractConfigSource
     return $this->getStyleNode($path)->renderStyle($params);
   } // style()
 
+  /**
+   * Add a several images from a directory to the sprite.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
+   *
+   * @param string $path   The directory path.
+   * @param array  $params An array of parameters
+   * @access  public
+   * @return  CSprite This object.
+   */
   public function ppRegister($path, array $params = array())
   {
     $this->spriteImageRegistry->register($path, $params);
+
+    return $this;
   } // ppRegister()
+
+  /**
+   * Add a single image to the sprite.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
+   *
+   * @param string $path   The image path.
+   * @param array  $params An array of parameters
+   * @access  public
+   * @return  CSprite This object.
+   */
+  public function addImage($path, array $params = array())
+  {
+    $this->spriteImageRegistry->addImage($path, $params);
+
+    return $this;
+  } // addImage()
 
   public function ppStyle($path, array $params = array())
   {
     //SpriteImageRegistry::register($path, @$params['name'], @$params['imageType']);
     $this->spriteImageRegistry->register($path, $params);
-    return sprintf("<?php echo CSprite::getInstance('%s')->style('%s', %s); ?>", $this->getName(), $path, self::arToStr($params));
+    return sprintf("<?php echo CSprite::getInstance('%s')->style('%s', %s); ?>", $this->getName(), $path, CSpriteTools::arrayToString($params));
   } // ppStyle()
 
   public function styleWithBackground($path, array $params = array())
@@ -304,34 +343,6 @@ class CSprite implements SpriteAbstractConfigSource
   public function getCssInclude($spriteName, $imageType = null){
     return $this->spriteStyleRegistry->getCssInclude($spriteName, $imageType);
   } // getCssInclude()
-
-  protected static function arToStr($array, $depth = 0)
-  {
-    $tab = '';
-    if($depth > 0){
-      $tab = implode('', array_fill(0, $depth, "\t"));
-    }
-
-    $text="array(\n";
-    $count=count($array);
-    $x =0 ;
-    foreach ($array as $key=>$value){
-       $x++;
-       if (is_array($value)){
-         if(substr($text,-1,1)==')')    $text .= ',';
-         $text.=$tab."\t".'"'.$key.'"'." => ".self::arToStr($value, $depth+1);
-         if ($count!=$x) $text.=",\n";
-         continue;
-       }
-
-       $text.=$tab."\t"."\"$key\" => \"$value\""; 
-       if ($count!=$x) $text.=",\n";
-    }
-
-    $text.="\n".$tab.")\n";
-    if(substr($text, -4, 4)=='),),')$text.='))';
-    return $text;
-  } // arToStr()
 
 }
 

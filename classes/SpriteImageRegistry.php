@@ -21,12 +21,14 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
   /**
    * The style registry.
    * @var array
+   * @access protected
    */
   protected $registry;
 
   /**
    * The SpriteImageWriter object.
    * @var   SpriteImageWriter
+   * @access protected
    */
   protected $spriteImageWriter;
 
@@ -70,6 +72,8 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
 
   /**
    * Get this object CSprite cache manager.
+   *
+   * @access public
    * @return SpriteCache a SpriteCache object.
    */
   public function getSpriteCache()
@@ -79,6 +83,8 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
 
   /**
    * Get this registry image write.
+   *
+   * @access public
    * @return SpriteImageWriter a SpriteImageWriter.
    */
   public function getSpriteImageWriter()
@@ -88,8 +94,17 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
 
   /**
    * Add a image or directory path to the registry.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
+   *
    * @param  string $imgPath      A relative path.
    * @param  array  $params       An associative array of parameters.
+   * @access public
    * @return SpriteImageRegistry  This object.
    */
   public function register($imgPath, array $params = array())
@@ -104,7 +119,7 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
 
     if(is_dir($absPath))
     {
-      $files = self::buildFileList($absPath);
+      $files = CSpriteTools::buildFileList($absPath);
     }
     elseif(filesize($absPath))
     {
@@ -117,14 +132,12 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
 
     foreach($files as $imgFile)
     {
+
       if(! is_dir($imgFile)) // Ignore bogus directories.
       {
-        $this->addImage($imgFile, $params);
+        $this->addImage($imgFile, $params, true);
       } // Ignore bogus directories.
     }
-
-    // Process sprites after each directory addition.
-    $this->processSprites();
 
     return $this;
   } // register()
@@ -144,17 +157,15 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
         //First lets prepare all the sprite properties
         $sprite->prepareSprite();
         //Now lets sort it
-        call_user_func($this->getSpriteConfig()->get('sorter').'::sort',&$sprite);
+        call_user_func($this->getSpriteConfig()->get('sorter').'::sort',$sprite);
 
         //And pack the sprite
         $packer_class = $this->getSpriteConfig()->get('packer');
         $packer = new $packer_class($this);
-        $packer->pack(&$sprite);
+        $packer->pack($sprite);
 
         //Write the sprite image to a file
         $this->getSpriteImageWriter()->writeImages($sprite);
-        //Update all the sprite styles to the registry
-        $this->getCSprite()->getStyleRegistry()->addSprite($sprite);
       }
       //SpriteStyleRegistry::processCssMetaFiles();
     }
@@ -165,21 +176,29 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
 
   protected function loadSorter()
   {
-    if (include_once 'sorters/' .$this->getSpriteConfig()->getSorter().'.php')
-    {
-      $classname = $this->getSpriteConfig()->getSorter();
-      return new $classname;
-    }
-    else
-    {
-      throw new SpriteException ('Sorter class not found.');
-    }
-  }
+    $classname = $this->getSpriteConfig()->getSorter();
+    return new $classname();
+  } // loadSorter()
 
-  protected function addImage($path, $params)
+  /**
+   * Add an image to this registry.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
+   *
+   * @param string $path   A absolute image file path.
+   * @param array  $params An array of parameters.
+   * @param boolean $batch True to disable sprite processing after image addition.
+   * @access public
+   * @return  SpriteImageRegistry This object.
+   */
+  public function addImage($path, $params, $batch = false)
   {
-    $spriteName = @$params['name'];
-    $imageType  = @$params['imageType'];
+    $spriteName = isset($params['name']) ? $params['name'] : null;
 
     try
     {
@@ -187,34 +206,29 @@ class SpriteImageRegistry implements SpriteAbstractConfigSource
     }
     catch(SpriteException $e)
     {
-      return NULL;
+      throw $e;
+      //return $this;
     }
 
-    $type = ($imageType)?($imageType):($spriteImage->getType());
-    $tempSprite = new SpriteSprite($this, $spriteName, $type);
-
-    if(!isset($this->registry[$tempSprite->getKey()]))
+    if(!isset($params['imageType']))
     {
-      $this->registry[$tempSprite->getKey()] = $tempSprite;
+      $params['imageType'] = $spriteImage->getType();
     }
 
-    $this->registry[$tempSprite->getKey()][] = $spriteImage;
+    $sprite = new SpriteSprite($this, $params);
+
+    if(!isset($this->registry[$sprite->getKey()]))
+    {
+      $this->registry[$sprite->getKey()] = $sprite;
+    }
+
+    $this->registry[$sprite->getKey()][] = $spriteImage;
+
+    //Update all the sprite styles to the registry
+    $this->getCSprite()->getStyleRegistry()->addSprite($this->registry[$sprite->getKey()]);
+
+    return $this;
   } // addImage()
-
-  public static function buildFileList($path)
-  {
-    $files = array();
-    $fileObjs = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-    foreach($fileObjs as $name=>$fileObj)
-    {
-      if($fileObj->isFile())
-      {
-        $files[] = $name;
-      }
-    }
-
-    return $files;
-  } // buildFileList()
 
   public function debug(){
     $output = '';

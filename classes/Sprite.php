@@ -36,10 +36,46 @@ class Sprite
     return CSprite::getInstance()->style($path, $params);
   }
 
+  /**
+   * Add a several images from a directory to the default sprite.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
+   *
+   * @param string $path   The directory path.
+   * @param array  $params An array of parameters
+   * @access  public
+   * @static
+   * @return  CSprite The sprite object.
+   */
   public static function ppRegister($path, array $params = array())
   {
     return CSprite::getInstance()->ppRegister($path, $params);
-  }
+  } // ppRegister()
+
+  /**
+   * Add a single image to the default sprite.
+   *
+   * Accepted params are:
+   *  - name : the sprite name.
+   *  - imageType : the image type.
+   *  - sprite-margin : margins of the image in the sprite.
+   *  - hoverXOffset : Offset to the background X position on hover
+   *  - hoverYOffset : Offset to the background Y position on hover
+   *
+   * @param string $path   The image path.
+   * @param array  $params An array of parameters
+   * @access  public
+   * @return  CSprite The sprite object.
+   */
+  public static function addImage($path, array $params = array())
+  {
+    return CSprite::getInstance()->addImage($path, $params);
+  } // addImage()
 
   public static function ppStyle($path, array $params = array())
   {

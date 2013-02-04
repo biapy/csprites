@@ -80,7 +80,7 @@ class SpriteCache
     }
 
     if(file_exists($absFile)){
-      return (time() - $cacheTime < filemtime($file))?(false):(true);
+      return (time() - $cacheTime < filemtime($absFile))?(false):(true);
     }
     return true;
   } // needsCreation()

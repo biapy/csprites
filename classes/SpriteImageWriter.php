@@ -85,7 +85,7 @@ class SpriteImageWriter implements SpriteAbstractConfigSource
 
     $imgSize = $this->getImageSize($sprite);
 
-    if($this->getSpriteCache()->needsCreation($filePath))
+    if($this->getSpriteCache()->needsCreation($this->getSpriteConfig()->get('rootDir') . $filePath))
     {
       switch($sprite->getType())
       {
@@ -199,12 +199,18 @@ class SpriteImageWriter implements SpriteAbstractConfigSource
 
     foreach($sprite as $spriteImage)
     {
-      $tempImage = imagecreatefrompng($spriteImage->getPath());
-      $position = $spriteImage->getPosition();
-      $margin = $spriteImage->getMargin();
-      imagecopy($spriteHolder, $tempImage, $position->left + $margin->left, $position->top + $margin->top,
+      if(file_exists($spriteImage->getPath()))
+      {
+        $tempImage = imagecreatefrompng($spriteImage->getPath());
+        if($tempImage)
+        {
+          $position = $spriteImage->getPosition();
+          $margin = $spriteImage->getMargin();
+          imagecopy($spriteHolder, $tempImage, $position->left + $margin->left, $position->top + $margin->top,
                 0, 0, $spriteImage->getOriginalWidth(), $spriteImage->getOriginalHeight());
-      imagedestroy($tempImage);
+          imagedestroy($tempImage);
+        }
+      }
     }
 
     ob_start();
